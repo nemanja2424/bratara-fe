@@ -1,0 +1,121 @@
+.container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  padding: 20px;
+  min-height: calc(100vh - 70px);
+}
+
+.formWrapper {
+  width: 100%;
+  max-width: 450px;
+}
+
+.formBox {
+  background: var(--white);
+  padding: 40px 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 70, 167, 0.08);
+  border: 1px solid #e0e0e0;
+}
+
+.formBox h1 {
+  font-size: 28px;
+  margin-bottom: 5px;
+  text-align: center;
+  color: var(--primary-color);
+}
+
+.subtitle {
+  text-align: center;
+  color: var(--text-light);
+  margin-bottom: 30px;
+  font-size: 14px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.formGroup input {
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 16px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.formGroup input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px rgba(0, 70, 167, 0.1);
+  outline: none;
+}
+
+.formGroup input::placeholder {
+  color: var(--dark-gray);
+}
+
+.submitBtn {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--primary-color);
+  color: var(--white);
+  font-weight: 600;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background-color: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 70, 167, 0.15);
+}
+
+.submitBtn:disabled {
+  background-color: var(--dark-gray);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.submitBtn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .container {
+    min-height: calc(100vh - 60px);
+    padding: 15px;
+  }
+
+  .formBox {
+    padding: 25px 20px;
+  }
+
+  .formBox h1 {
+    font-size: 24px;
+  }
+
+  .formGroup {
+    margin-bottom: 15px;
+  }
+
+  .formGroup input {
+    padding: 10px 12px;
+    font-size: 16px;
+  }
+}
