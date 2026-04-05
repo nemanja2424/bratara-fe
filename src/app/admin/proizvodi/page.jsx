@@ -45,6 +45,7 @@ export default function ProizvodiAdmin() {
   const [error, setError] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [sortBy, setSortBy] = useState('ime');
   const [sortOrder, setSortOrder] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
@@ -839,34 +840,38 @@ export default function ProizvodiAdmin() {
         </div>
       )}
 
-      {/* Empty State */}
-      {!loading && !error && proizvodi.length === 0 && (
-        <div className={styles.emptyState}>
-          <i className="fas fa-inbox"></i>
-          <h3>Nema Proizvoda</h3>
-          <p>Počnite dodavanjem prvog proizvoda za vaš shop</p>
-        </div>
-      )}
-
       {/* Table View */}
-      {!loading && !error && proizvodi.length > 0 && (
+      {!loading && !error && (
         <div className={styles.tableSection}>
           {/* Search Bar */}
           <div className={styles.searchBar}>
-            <i className="fas fa-search"></i>
             <input
               type="text"
               placeholder="Pretraži proizvode..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  setSearchTerm(searchInput);
+                  setCurrentPage(1);
+                }
               }}
             />
-            {searchTerm && (
+            <button
+              className={styles.searchBtn}
+              onClick={() => {
+                setSearchTerm(searchInput);
+                setCurrentPage(1);
+              }}
+              title="Pretraži (Enter ili klik)"
+            >
+              <i className="fas fa-search"></i>
+            </button>
+            {searchInput && (
               <button
                 className={styles.clearBtn}
                 onClick={() => {
+                  setSearchInput('');
                   setSearchTerm('');
                   setCurrentPage(1);
                 }}
@@ -1152,50 +1157,57 @@ export default function ProizvodiAdmin() {
             </span>
           </div>
 
-          {/* Table */}
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th className={styles.codeColumn} style={{ textAlign: 'center' }}>
-                    Šifra
-                  </th>
-                  <th className={styles.nameColumn}>
-                    <button className={styles.sortBtn} onClick={() => handleSort('ime')}>
-                      Naziv <i className={handleSortIcon('ime')}></i>
-                    </button>
-                  </th>
-                  {!isGrouped && (
-                    <>
-                      <th className={styles.bojaColumn} style={{ textAlign: 'center' }}>Boja</th>
-                      <th className={styles.sizeColumn} style={{ textAlign: 'center' }}>Veličina</th>
-                    </>
-                  )}
-                  <th className={styles.stanjeColumn} style={{ textAlign: 'center' }}>
-                    <button className={styles.sortBtn} onClick={() => handleSort('stanje')}>
-                      Stanje <i className={handleSortIcon('stanje')}></i>
-                    </button>
-                  </th>
-                  <th style={{ textAlign: 'center', padding: '12px 8px', minWidth: '100px' }}>
-                    <button className={styles.sortBtn} onClick={() => handleSort('cena')}>
-                      Cena <i className={handleSortIcon('cena')}></i>
-                    </button>
-                  </th>
-                  <th style={{ textAlign: 'center', padding: '12px 8px', minWidth: '80px' }}>
-                    <button className={styles.sortBtn} onClick={() => handleSort('popust')}>
-                      Popust <i className={handleSortIcon('popust')}></i>
-                    </button>
-                  </th>
-                  <th className={styles.categoryColumn}>
-                    <button className={styles.sortBtn} onClick={() => handleSort('kategorija')}>
-                      Kategorija <i className={handleSortIcon('kategorija')}></i>
-                    </button>
-                  </th>
-                  <th className={styles.actionColumn} style={{ textAlign: 'center' }}>Akcije</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedProizvodi.map((proizvod, index) => (
+          {/* Empty State or Table */}
+          {proizvodi.length === 0 ? (
+            <div className={styles.emptyState} style={{ padding: '40px 20px', textAlign: 'center' }}>
+              <i className="fas fa-inbox"></i>
+              <h3>Nema Proizvoda</h3>
+              <p>Počnite dodavanjem prvog proizvoda za vaš shop</p>
+            </div>
+          ) : (
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
+                <thead>
+                  <tr>
+                    <th className={styles.codeColumn} style={{ textAlign: 'center' }}>
+                      Šifra
+                    </th>
+                    <th className={styles.nameColumn}>
+                      <button className={styles.sortBtn} onClick={() => handleSort('ime')}>
+                        Naziv <i className={handleSortIcon('ime')}></i>
+                      </button>
+                    </th>
+                    {!isGrouped && (
+                      <>
+                        <th className={styles.bojaColumn} style={{ textAlign: 'center' }}>Boja</th>
+                        <th className={styles.sizeColumn} style={{ textAlign: 'center' }}>Veličina</th>
+                      </>
+                    )}
+                    <th className={styles.stanjeColumn} style={{ textAlign: 'center' }}>
+                      <button className={styles.sortBtn} onClick={() => handleSort('stanje')}>
+                        Stanje <i className={handleSortIcon('stanje')}></i>
+                      </button>
+                    </th>
+                    <th style={{ textAlign: 'center', padding: '12px 8px', minWidth: '100px' }}>
+                      <button className={styles.sortBtn} onClick={() => handleSort('cena')}>
+                        Cena <i className={handleSortIcon('cena')}></i>
+                      </button>
+                    </th>
+                    <th style={{ textAlign: 'center', padding: '12px 8px', minWidth: '80px' }}>
+                      <button className={styles.sortBtn} onClick={() => handleSort('popust')}>
+                        Popust <i className={handleSortIcon('popust')}></i>
+                      </button>
+                    </th>
+                    <th className={styles.categoryColumn}>
+                      <button className={styles.sortBtn} onClick={() => handleSort('kategorija')}>
+                        Kategorija <i className={handleSortIcon('kategorija')}></i>
+                      </button>
+                    </th>
+                    <th className={styles.actionColumn} style={{ textAlign: 'center' }}>Akcije</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedProizvodi.map((proizvod, index) => (
                   <tr key={`${proizvod.code_base}-${index}`} className={index % 2 === 0 ? styles.rowEven : ''}>
                     <td className={styles.codeColumn}>
                       <span className={styles.codeBadge}>
@@ -1283,9 +1295,10 @@ export default function ProizvodiAdmin() {
                     </td>
                   </tr>
                 ))}
-              </tbody>
-            </table>
-          </div>
+                  </tbody>
+                </table>
+              </div>
+            )}
 
           {/* Pagination */}
           {totalPages > 1 && (

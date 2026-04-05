@@ -196,6 +196,24 @@
   transform: scale(1.1);
 }
 
+.searchBtn {
+  background: none;
+  border: none;
+  color: #0099cc;
+  cursor: pointer;
+  font-size: 1.1rem;
+  transition: all 0.2s ease;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.searchBtn:hover {
+  color: #014fb4;
+  transform: scale(1.15);
+}
+
 .resultInfo {
   padding: 12px 20px;
   background: rgba(1, 79, 180, 0.05);
