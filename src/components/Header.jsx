@@ -34,17 +34,23 @@ export default function Header({ adminPanel = false }) {
     };
   }, []);
 
-  const handleLogout = () => {
+    const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('rola');
     localStorage.removeItem('userId');
+
     setIsLoggedIn(false);
     setUserRole(null);
     setMobileMenuOpen(false);
-    // Trigger auth update event za Header
+
+    // obavesti druge komponente (npr Header)
     window.dispatchEvent(new Event('auth-updated'));
-    router.push('/login');
-  };
+
+    // ✅ redirect samo ako je admin ruta
+    if (pathname.startsWith('/admin')) {
+        router.replace('/');
+    }
+    };
 
   return (
     <header className={styles.header}>
@@ -52,11 +58,12 @@ export default function Header({ adminPanel = false }) {
         <div className={styles.logo}>
           <Link href="/" className={styles.logoLink}>
             <Image
-              src="/brataraLogo.webp"
-              alt="Bratara Logo"
+              src="/brateraLogo.webp"
+              alt="Butik Irna Logo"
               width={120}
               height={50}
               priority
+              style={{ width: 'auto', height: '50px' }}
             />
           </Link>
         </div>

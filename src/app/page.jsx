@@ -11,8 +11,8 @@ export default function Home() {
     <div className={styles.page}>
       <div className={styles.hero}>
         <div className={styles.heroContent}>
-          <h1>Bratara Shop</h1>
-          <p>Pronađite savršenu bratarico za svaku priliku</p>
+          <h1>Butik Irna</h1>
+          <p>Pronađite savršenu stilaciju za svaku priliku</p>
           <div className={styles.heroCtas}>
             <button 
               className={styles.primaryBtn}
@@ -30,32 +30,32 @@ export default function Home() {
         </div>
         <div className={styles.heroImage}>
           <div className={styles.heroPlaceholder}>
-            ✨
+            <i className="fas fa-sparkles fa-gradient"></i>
           </div>
         </div>
       </div>
 
       <section className={styles.features}>
         <div className={styles.container}>
-          <h2>Zašto Bratara Shop?</h2>
+          <h2>Zašto Butik Irna?</h2>
           <div className={styles.featureGrid}>
             <FeatureCard
-              icon="🚚"
+              icon="fas fa-truck"
               title="Brza Dostava"
               description="Dostava na vašu adresu u roku od 2-3 radna dana"
             />
             <FeatureCard
-              icon="💳"
+              icon="fas fa-credit-card"
               title="Sigurna Plaćanja"
               description="Sve metode plaćanja su enkriptovane i sigurne"
             />
             <FeatureCard
-              icon="🔄"
+              icon="fas fa-sync-alt"
               title="Povrat Garantovan"
               description="30 dana za povrat ili zamjenu bez uzroka"
             />
             <FeatureCard
-              icon="⭐"
+              icon="fas fa-trophy"
               title="Kvaliteta 100%"
               description="Samo proizvodi od najboljih materijala"
             />
@@ -90,7 +90,9 @@ export default function Home() {
 function FeatureCard({ icon, title, description }) {
   return (
     <div className={styles.featureCard}>
-      <div className={styles.featureIcon}>{icon}</div>
+      <div className={styles.featureIcon}>
+        <i className={`${icon} fa-gradient`}></i>
+      </div>
       <h3>{title}</h3>
       <p>{description}</p>
     </div>

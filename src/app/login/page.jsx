@@ -14,6 +14,7 @@ export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -121,11 +122,14 @@ export default function LoginPage() {
                 <div className={styles.formWrapper}>
                     <div className={styles.formBox}>
                         <h1>Prijava</h1>
-                        <p className={styles.subtitle}>Prijavite se na Bratara Shop</p>
+                        <p className={styles.subtitle}>Prijavite se na Butik Irna</p>
                         
                         <form onSubmit={handleSubmit}>
                             <div className={styles.formGroup}>
-                                <label htmlFor="email">Email:</label>
+                                <label htmlFor="email">
+                                    <i className="fas fa-envelope fa-gradient" style={{marginRight: '8px'}}></i>
+                                    Email
+                                </label>
                                 <input
                                     id="email"
                                     type="email"
@@ -137,15 +141,27 @@ export default function LoginPage() {
                             </div>
                             
                             <div className={styles.formGroup}>
-                                <label htmlFor="password">Lozinka:</label>
-                                <input
-                                    id="password"
-                                    type="password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    required
-                                    placeholder="••••••••"
-                                />
+                                <label htmlFor="password">
+                                    <i className="fas fa-lock fa-gradient" style={{marginRight: '8px'}}></i>
+                                    Lozinka
+                                </label>
+                                <div className={styles.passwordInputWrapper}>
+                                    <input
+                                        id="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        required
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        className={styles.passwordToggleBtn}
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        <i className={`fas fa-eye${showPassword ? '' : '-slash'}`}></i>
+                                    </button>
+                                </div>
                             </div>
                             
                             <button
@@ -153,6 +169,7 @@ export default function LoginPage() {
                                 disabled={loading}
                                 className={styles.submitBtn}
                             >
+                                <i className="fas fa-sign-in-alt" style={{marginRight: '8px'}}></i>
                                 {loading ? 'Učitavanje...' : 'Prijavi se'}
                             </button>
                         </form>

@@ -13,13 +13,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Bratara Shop - Moderan online butik",
-  description: "Kupite bratarice online - visoke kvalitete po najboljim cijenama",
+  title: "Butik Irna - Moderan Online Butik | Fashion & Moda",
+  description: "Otkrijte ekskluzivu kolekciju u Butik Irna. Kvalitetna odela, dodatke i stilske komade sa dostavom na kući.",
+  keywords: ["butik", "moda", "online shop", "irna", "fashion"],
+  icons: {
+    icon: "/brataraLogo.webp",
+  },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="sr" data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable}`}>
+      <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+      </head>
       <body>
         <Header/>
         <main>{children}</main>
