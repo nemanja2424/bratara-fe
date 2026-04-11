@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -34,7 +34,7 @@ const SIZE_PRESETS = {
   odeca: ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'],
 };
 
-export default function ProizvodiPage() {
+function ProizvodiPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [proizvodi, setProizvodi] = useState([]);
@@ -550,6 +550,14 @@ export default function ProizvodiPage() {
         ></div>
       </section>
     </div>
+  );
+}
+
+export default function ProizvodiPage() {
+  return (
+    <Suspense fallback={<div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}><div>Učitavanje...</div></div>}>
+      <ProizvodiPageContent />
+    </Suspense>
   );
 }
 
