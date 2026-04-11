@@ -1,6 +1,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
+import { CartProvider } from "@/context/CartContext";
+import RootContent from "./RootContent";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,8 +30,14 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
       </head>
       <body>
-        <Header/>
-        <main>{children}</main>
+        <CartProvider>
+          <Header/>
+          <main>
+            <RootContent>
+              {children}
+            </RootContent>
+          </main>
+        </CartProvider>
       </body>
     </html>
   );

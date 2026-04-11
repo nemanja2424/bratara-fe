@@ -85,7 +85,7 @@ export default function Header({ adminPanel = false }) {
           <Link href="/proizvodi" className={styles.navLink}>
             Proizvodi
           </Link>
-          <Link href="/o-nama" className={styles.navLink}>
+          <Link href="/about" className={styles.navLink}>
             O nama
           </Link>
           <Link href="/kontakt" className={styles.navLink}>

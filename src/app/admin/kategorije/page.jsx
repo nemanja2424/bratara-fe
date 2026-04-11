@@ -85,6 +85,9 @@ export default function KategorijeAdmin() {
       if (sortBy === 'id') {
         aVal = a.id;
         bVal = b.id;
+      } else if (sortBy === 'status') {
+        aVal = a.active;
+        bVal = b.active;
       }
 
       if (typeof aVal === 'string') {
@@ -421,7 +424,11 @@ export default function KategorijeAdmin() {
                       Naziv <i className={getSortIcon('name')}></i>
                     </button>
                   </th>
-                  <th className={styles.statusColumn}>Status</th>
+                  <th className={styles.statusColumn}>
+                    <button className={styles.sortBtn} onClick={() => handleSort('status')}>
+                      Status <i className={getSortIcon('status')}></i>
+                    </button>
+                  </th>
                   <th className={styles.actionColumn}>Akcije</th>
                 </tr>
               </thead>
