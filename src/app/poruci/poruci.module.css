@@ -425,6 +425,243 @@
 }
 
 /* ============================
+   STOCK PROBLEM MODAL
+   ============================ */
+
+.stockProblemModal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.stockProblemModal .modalContent {
+  background: white;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.stockProblemModal .modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.stockProblemModal .modalTitle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stockProblemModal .modalTitle i {
+  font-size: 1.5rem;
+  color: #e74c3c;
+}
+
+.stockProblemModal .modalTitle h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.stockProblemModal .closeBtn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  transition: color 0.3s ease;
+}
+
+.stockProblemModal .closeBtn:hover {
+  color: #333;
+}
+
+.stockProblemModal .modalBody {
+  padding: 24px;
+}
+
+.problemInfo {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.infoRow:last-child {
+  border-bottom: none;
+}
+
+.infoRow .label {
+  font-weight: 600;
+  color: #666;
+}
+
+.infoRow .value {
+  font-weight: 700;
+  color: #333;
+}
+
+.infoRow .available {
+  color: #27ae60;
+}
+
+.infoRow .shortage {
+  color: #e74c3c;
+}
+
+.actions {
+  margin-bottom: 20px;
+}
+
+.actionGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.actionGroup p {
+  margin: 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.quantityControl {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quantityControl label {
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.quantityInput {
+  display: flex;
+  gap: 8px;
+}
+
+.quantityInput input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.quantityInput input:focus {
+  outline: none;
+  border-color: #0066e0;
+}
+
+.btn {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.primaryBtn {
+  background: linear-gradient(135deg, #0099cc, #0066e0);
+  color: white;
+  width: 100%;
+}
+
+.primaryBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 153, 204, 0.3);
+}
+
+.deleteBtn {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  width: 100%;
+}
+
+.deleteBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.3);
+}
+
+.quickBtn {
+  background: #f0f0f0;
+  color: #333;
+  flex: 1;
+  width: auto;
+}
+
+.quickBtn:hover {
+  background: #e0e0e0;
+}
+
+.stockProblemModal .modalFooter {
+  padding: 16px 24px;
+  border-top: 2px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.problemCounter {
+  font-size: 0.85rem;
+  color: #999;
+  font-weight: 500;
+}
+
+/* ============================
    RESPONSIVE DESIGN
    ============================ */
 

@@ -36,7 +36,14 @@ const COLORS = {
 
 export default function PorucPage() {
   const router = useRouter();
-  const { cartItems, getTotalPrice, getOriginalPrice, getSavings, clearCart } = useCartContext();
+  const { 
+    cartItems, 
+    getTotalPrice, 
+    getOriginalPrice, 
+    getSavings, 
+    clearCart,
+    removeFromCart 
+  } = useCartContext();
 
   const [formData, setFormData] = useState({
     ime: '',
@@ -50,6 +57,9 @@ export default function PorucPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [stockProblems, setStockProblems] = useState([]);
+  const [currentProblemIndex, setCurrentProblemIndex] = useState(0);
+  const [adjustedQuantities, setAdjustedQuantities] = useState({});
 
   // Učitaj user podatke ako je prijavljen
   useEffect(() => {
@@ -177,19 +187,14 @@ export default function PorucPage() {
       // Uzmi userId iz localStorage
       const userId = parseInt(localStorage.getItem('userId')) || 1;
 
-      // Kreiraj payload
-      const payload = {
-        ime: formData.ime,
-        prezime: formData.prezime,
-        telefon: formData.telefon,
-        email: formData.email,
-        adresa: `${formData.postanskiBroj} ${formData.grad}, ${formData.adresa}`,
-        userId: userId,
-        korpa: cartItems.map(item => ({
+      // Kreiraj payload sa prilagođenim količinama ako postoje
+      const korpaZaSizbanje = cartItems.map(item => {
+        const adjustedQty = adjustedQuantities[item.code_base] || item.kolicina;
+        return {
           code: item.code_base,
-          kolicina: item.kolicina,
-        })),
-      };
+          kolicina: adjustedQty,
+        };
+      });
 
       // Pošalji na API
       const response = await fetch(`${API_BASE}/api/porudzbine/post`, {
@@ -197,11 +202,30 @@ export default function PorucPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ime: formData.ime,
+          prezime: formData.prezime,
+          telefon: formData.telefon,
+          email: formData.email,
+          adresa: `${formData.postanskiBroj} ${formData.grad}, ${formData.adresa}`,
+          userId: userId,
+          korpa: korpaZaSizbanje,
+        }),
       });
 
       if (!response.ok) {
-        throw new Error('Greška pri kreiranju porudžbine');
+        const errorData = await response.json();
+        
+        // Proveri da li je insufficient_stock greška
+        if (errorData.error === 'insufficient_stock') {
+          // Prikaži modal sa problemom
+          setStockProblems([errorData.product]);
+          setCurrentProblemIndex(0);
+          setIsSubmitting(false);
+          return;
+        }
+
+        throw new Error(errorData.message || 'Greška pri kreiranju porudžbine');
       }
 
       const data = await response.json();
@@ -213,8 +237,10 @@ export default function PorucPage() {
 
       // Očisti korpu
       clearCart();
+      setStockProblems([]);
+      setAdjustedQuantities({});
 
-      // Preusměri na stranicu sa potvrdom (ili na početnu)
+      // Preusměri
       setTimeout(() => {
         router.push('/proizvodi');
       }, 2000);
@@ -229,6 +255,152 @@ export default function PorucPage() {
   const totalPrice = getTotalPrice();
   const originalPrice = getOriginalPrice();
   const savings = getSavings();
+
+  // Funkcije za rukovanje stock problemima
+  const handleAdjustQuantity = (code, newQuantity) => {
+    const qty = Math.max(0, Math.min(parseInt(newQuantity) || 0, stockProblems[currentProblemIndex]?.available || 0));
+    setAdjustedQuantities(prev => ({
+      ...prev,
+      [code]: qty,
+    }));
+  };
+
+  const handleRemoveStockProblemProduct = (code) => {
+    const itemIndex = cartItems.findIndex(item => item.code_base === code);
+    if (itemIndex >= 0) {
+      removeFromCart(itemIndex);
+      // Nastavi na sledeći problem ili zatvori modal
+      if (currentProblemIndex < stockProblems.length - 1) {
+        setCurrentProblemIndex(currentProblemIndex + 1);
+      } else {
+        setStockProblems([]);
+        setCurrentProblemIndex(0);
+      }
+    }
+  };
+
+  const handleNextProblem = () => {
+    if (currentProblemIndex < stockProblems.length - 1) {
+      setCurrentProblemIndex(currentProblemIndex + 1);
+    } else {
+      // Svi problemi su obrađeni, pokušaj ponovo
+      setStockProblems([]);
+      setCurrentProblemIndex(0);
+      setAdjustedQuantities({});
+      handleSubmitOrder();
+    }
+  };
+
+  // Ako ima stock problema, prikaži modal
+  if (stockProblems.length > 0) {
+    const currentProblem = stockProblems[currentProblemIndex];
+    
+    return (
+      <div className={styles.page}>
+        <div className={`${styles.modal} ${styles.stockProblemModal}`}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalTitle}>
+                <i className="fas fa-exclamation-triangle"></i>
+                <h2>Nema dovoljno na stanju</h2>
+              </div>
+              <button 
+                className={styles.closeBtn}
+                onClick={() => setStockProblems([])}
+              >
+                <i className="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              <div className={styles.problemInfo}>
+                <div className={styles.infoRow}>
+                  <span className={styles.label}>Proizvod:</span>
+                  <span className={styles.value}>{currentProblem.name}</span>
+                </div>
+                <div className={styles.infoRow}>
+                  <span className={styles.label}>Traženo:</span>
+                  <span className={styles.value}>{currentProblem.requested} kom</span>
+                </div>
+                <div className={styles.infoRow}>
+                  <span className={styles.label}>Dostupno:</span>
+                  <span className={styles.value + ' ' + styles.available}>
+                    {currentProblem.available} kom
+                  </span>
+                </div>
+                <div className={styles.infoRow}>
+                  <span className={styles.label}>Nedostaje:</span>
+                  <span className={styles.value + ' ' + styles.shortage}>
+                    {currentProblem.shortage} kom
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.actions}>
+                {currentProblem.available === 0 ? (
+                  <div className={styles.actionGroup}>
+                    <p>Nažalost, nema više ovog proizvoda na stanju.</p>
+                    <button 
+                      className={`${styles.btn} ${styles.deleteBtn}`}
+                      onClick={() => handleRemoveStockProblemProduct(currentProblem.code)}
+                    >
+                      <i className="fas fa-trash"></i>
+                      Obriši iz korpe
+                    </button>
+                  </div>
+                ) : (
+                  <div className={styles.actionGroup}>
+                    <p>Možete nastaviti sa dostupnom količinom ili obrisati proizvod.</p>
+                    <div className={styles.quantityControl}>
+                      <label>Nova količina (do {currentProblem.available}):</label>
+                      <div className={styles.quantityInput}>
+                        <input 
+                          type="number" 
+                          min="0" 
+                          max={currentProblem.available}
+                          value={adjustedQuantities[currentProblem.code] || currentProblem.available}
+                          onChange={(e) => handleAdjustQuantity(currentProblem.code, e.target.value)}
+                        />
+                        <button 
+                          className={`${styles.btn} ${styles.quickBtn}`}
+                          onClick={() => handleAdjustQuantity(currentProblem.code, currentProblem.available)}
+                        >
+                          Prilagodi na {currentProblem.available} kom
+                        </button>
+                      </div>
+                    </div>
+                    <button 
+                      className={`${styles.btn} ${styles.deleteBtn}`}
+                      onClick={() => handleRemoveStockProblemProduct(currentProblem.code)}
+                    >
+                      <i className="fas fa-trash"></i>
+                      Obriši iz korpe
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.modalFooter}>
+              {stockProblems.length > 1 && (
+                <span className={styles.problemCounter}>
+                  Problem {currentProblemIndex + 1} od {stockProblems.length}
+                </span>
+              )}
+              <button 
+                className={`${styles.btn} ${styles.primaryBtn}`}
+                onClick={handleNextProblem}
+              >
+                {currentProblemIndex < stockProblems.length - 1 
+                  ? 'Sledeći problem' 
+                  : 'Pokušaj ponovo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.page}>

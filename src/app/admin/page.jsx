@@ -22,7 +22,7 @@ export default function AdminPage() {
                 <DashboardCard 
                     title="Narudžbe" 
                     description="Pregled svih narudžbi korisnika"
-                    link="/admin/narudzbe"
+                    link="/admin/porudzbine"
                     icon="fas fa-shopping-cart"
                     color="linear-gradient(135deg, #ffc107 0%, #ff9800 100%)"
                 />

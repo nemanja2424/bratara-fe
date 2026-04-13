@@ -9,7 +9,7 @@ export default function KupacPage() {
     <Suspense fallback={
       <div className={styles.page}>
         <div className={styles.container}>
-          <div className={styles.loadingMessage}>Ucitavanje...</div>
+          <div className={styles.loadingMessage}>Učitavanje...</div>
         </div>
       </div>
     }>

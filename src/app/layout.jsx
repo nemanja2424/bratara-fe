@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from "@/components/Header";
 import { CartProvider } from "@/context/CartContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { UserProvider } from "@/context/UserContext";
 import RootContent from "./RootContent";
 
 const geistSans = Geist({
@@ -31,16 +32,18 @@ export default function RootLayout({ children }) {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
       </head>
       <body>
-        <CartProvider>
-          <FavoritesProvider>
-            <Header/>
-            <main>
-              <RootContent>
-                {children}
-              </RootContent>
-            </main>
-          </FavoritesProvider>
-        </CartProvider>
+        <UserProvider>
+          <CartProvider>
+            <FavoritesProvider>
+              <Header/>
+              <main>
+                <RootContent>
+                  {children}
+                </RootContent>
+              </main>
+            </FavoritesProvider>
+          </CartProvider>
+        </UserProvider>
       </body>
     </html>
   );
