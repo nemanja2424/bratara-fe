@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
 import { useCartContext } from '@/context/CartContext';
@@ -49,6 +49,60 @@ export default function PorucPage() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  // Učitaj user podatke ako je prijavljen
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const accessToken = localStorage.getItem('access_token');
+        
+        if (!accessToken) {
+          setIsLoadingUser(false);
+          return;
+        }
+
+        const response = await fetch(`${API_BASE}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
+
+        if (!response.ok) {
+          setIsLoadingUser(false);
+          return;
+        }
+
+        const data = await response.json();
+        const user = data.user;
+
+        if (user) {
+          // Razdeli adresu na poštanski broj, grad i adresu
+          const addressParts = user.adresa?.split(', ') || [];
+          const postalAndCity = addressParts[0]?.split(' ') || [];
+          const postanskiBroj = postalAndCity[0] || '';
+          const grad = postalAndCity.slice(1).join(' ') || '';
+          const adresa = addressParts.slice(1).join(', ') || '';
+
+          setFormData({
+            ime: user.ime || '',
+            prezime: user.prezime || '',
+            telefon: user.telefon || '',
+            email: user.email || '',
+            grad: grad,
+            postanskiBroj: postanskiBroj,
+            adresa: adresa,
+          });
+        }
+      } catch (err) {
+        console.error('Greška pri učitavanju korisnika:', err);
+      } finally {
+        setIsLoadingUser(false);
+      }
+    };
+
+    loadUserData();
+  }, []);
 
   if (cartItems.length === 0) {
     return (
@@ -120,6 +174,9 @@ export default function PorucPage() {
     setIsSubmitting(true);
 
     try {
+      // Uzmi userId iz localStorage
+      const userId = parseInt(localStorage.getItem('userId')) || 1;
+
       // Kreiraj payload
       const payload = {
         ime: formData.ime,
@@ -127,7 +184,7 @@ export default function PorucPage() {
         telefon: formData.telefon,
         email: formData.email,
         adresa: `${formData.postanskiBroj} ${formData.grad}, ${formData.adresa}`,
-        userId: 1, // TODO: Zameni sa pravim userId iz autentifikacije
+        userId: userId,
         korpa: cartItems.map(item => ({
           code: item.code_base,
           kolicina: item.kolicina,
@@ -280,8 +337,8 @@ export default function PorucPage() {
             <div className={styles.cartItems}>
               {cartItems.map((item, index) => {
                 const discountedPrice = item.popust > 0
-                  ? Math.round(item.cena - (item.cena * item.popust / 100))
-                  : item.cena;
+                  ? parseFloat(item.cena) - (parseFloat(item.cena) * item.popust / 100)
+                  : parseFloat(item.cena);
 
                 return (
                   <div key={index} className={styles.cartItem}>
@@ -309,16 +366,16 @@ export default function PorucPage() {
                       </div>
                       <div className={styles.itemPrice}>
                         {item.popust > 0 && (
-                          <span className={styles.originalPrice}>{item.cena} KM</span>
+                          <span className={styles.originalPrice}>{parseFloat(item.cena).toFixed(2)} KM</span>
                         )}
-                        <span>{discountedPrice} KM</span>
+                        <span>{discountedPrice.toFixed(2)} KM</span>
                       </div>
                     </div>
                     <div className={styles.quantity}>
                       <span>x{item.kolicina}</span>
                     </div>
                     <div className={styles.itemTotal}>
-                      {discountedPrice * item.kolicina} KM
+                      {(discountedPrice * item.kolicina).toFixed(2)} KM
                     </div>
                   </div>
                 );
@@ -329,17 +386,21 @@ export default function PorucPage() {
             <div className={styles.priceBreakdown}>
               <div className={styles.priceRow}>
                 <span>Subtotal:</span>
-                <span>{originalPrice} KM</span>
+                <span>{originalPrice.toFixed(2)} KM</span>
               </div>
               {savings > 0 && (
                 <div className={styles.priceRow}>
                   <span className={styles.savings}>Ušteda:</span>
-                  <span className={styles.savings}>-{savings} KM</span>
+                  <span className={styles.savings}>-{savings.toFixed(2)} KM</span>
                 </div>
               )}
+              <div className={styles.priceRow}>
+                <span>Dostava:</span>
+                <span>10.00 KM</span>
+              </div>
               <div className={styles.priceRow + ' ' + styles.total}>
                 <span>Ukupno:</span>
-                <span>{totalPrice} KM</span>
+                <span>{(totalPrice + 10).toFixed(2)} KM</span>
               </div>
             </div>
 

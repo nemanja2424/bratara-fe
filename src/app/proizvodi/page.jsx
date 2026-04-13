@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useCartContext } from '@/context/CartContext';
+import { useFavoritesContext } from '@/context/FavoritesContext';
 import styles from './proizvodi.module.css';
 
 const API_BASE = 'http://127.0.0.1:5000';
@@ -563,6 +564,8 @@ export default function ProizvodiPage() {
 
 function ProductCard({ proizvod, onClick }) {
   const cart = useCartContext();
+  const { favorites, toggleFavorite } = useFavoritesContext();
+  const isFavorited = favorites.includes(proizvod.code_base);
   const buttonRef = useRef(null);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedColor, setSelectedColor] = useState(null);
@@ -671,13 +674,30 @@ function ProductCard({ proizvod, onClick }) {
     setQuantity(1);
   };
 
+  const handleToggleFavorite = (e) => {
+    e.stopPropagation();
+    toggleFavorite(proizvod.code_base);
+    const message = isFavorited ? '❤️ Uklonjen iz omiljenih' : '❤️ Dodano u omiljene';
+    toast.success(message, {
+      position: 'top-right',
+      autoClose: 2000,
+    });
+  };
+
   const discountedPrice = proizvod.popust > 0 
-    ? Math.round(proizvod.cena - (proizvod.cena * proizvod.popust / 100))
-    : proizvod.cena;
+    ? parseFloat(proizvod.cena) - (parseFloat(proizvod.cena) * proizvod.popust / 100)
+    : parseFloat(proizvod.cena);
 
   return (
     <div className={styles.productCard} onClick={onClick} data-animate>
       <div className={styles.productImage}>
+        <button
+          className={`${styles.favoriteBtn} ${isFavorited ? styles.favorited : ''}`}
+          onClick={handleToggleFavorite}
+          title={isFavorited ? 'Ukloni iz omiljenih' : 'Dodaj u omiljene'}
+        >
+          <i className={`${isFavorited ? 'fas' : 'far'} fa-heart`}></i>
+        </button>
         {proizvod.slike && proizvod.slike.length > 0 ? (
           <img 
             src={`${API_BASE}/api/proizvodi/slike/${proizvod.slike[0]}`}
@@ -702,13 +722,13 @@ function ProductCard({ proizvod, onClick }) {
           {proizvod.popust > 0 ? (
             <>
               <span className={styles.originalPrice}>
-                <span className={styles.strikeThroughPrice}>{proizvod.cena}</span>
+                <span className={styles.strikeThroughPrice}>{parseFloat(proizvod.cena).toFixed(2)}</span>
                 <span className={styles.strikeThrough}></span>
               </span>
-              <span className={styles.discountedPrice}>{discountedPrice} KM</span>
+              <span className={styles.discountedPrice}>{discountedPrice.toFixed(2)} KM</span>
             </>
           ) : (
-            <span className={styles.price}>{proizvod.cena} KM</span>
+            <span className={styles.price}>{parseFloat(proizvod.cena).toFixed(2)} KM</span>
           )}
         </div>
         <div className={styles.buttonWrapper} ref={buttonRef}>
@@ -788,14 +808,16 @@ function ProductCard({ proizvod, onClick }) {
                       <button 
                         className={styles.cancelBtn}
                         onClick={handleCancel}
+                        title="Otkaži"
                       >
-                        Otkaži
+                        <i className="fas fa-times"></i>
                       </button>
                       <button 
                         className={styles.confirmBtn}
                         onClick={handleConfirm}
+                        title="Potvrdi"
                       >
-                        Potvrdi
+                        <i className="fas fa-check"></i>
                       </button>
                     </div>
                   </>

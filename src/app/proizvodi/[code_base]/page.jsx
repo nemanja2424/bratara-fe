@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useCartContext } from '@/context/CartContext';
+import { useFavoritesContext } from '@/context/FavoritesContext';
 import styles from './proizvod-detail.module.css';
 
 const API_BASE = 'http://127.0.0.1:5000';
@@ -32,6 +33,8 @@ export default function ProizvodDetail() {
   const params = useParams();
   const code_base = params.code_base;
   const cart = useCartContext();
+  const { favorites, toggleFavorite } = useFavoritesContext();
+  const isFavorited = favorites.includes(code_base);
 
   const [proizvodi, setProizvodi] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -133,6 +136,15 @@ export default function ProizvodDetail() {
     setQuantity(1);
   };
 
+  const handleToggleFavorite = () => {
+    toggleFavorite(code_base);
+    const message = isFavorited ? '❤️ Uklonjen iz omiljenih' : '❤️ Dodano u omiljene';
+    toast.success(message, {
+      position: 'top-right',
+      autoClose: 2000,
+    });
+  };
+
   if (!isMounted) return null;
 
   if (loading) {
@@ -177,8 +189,8 @@ export default function ProizvodDetail() {
   }
 
   const discountedPrice = trenutniProizvod.popust > 0
-    ? Math.round(trenutniProizvod.cena - (trenutniProizvod.cena * trenutniProizvod.popust / 100))
-    : trenutniProizvod.cena;
+    ? parseFloat(trenutniProizvod.cena) - (parseFloat(trenutniProizvod.cena) * trenutniProizvod.popust / 100)
+    : parseFloat(trenutniProizvod.cena);
 
   return (
     <div className={styles.container}>
@@ -281,14 +293,14 @@ export default function ProizvodDetail() {
             {trenutniProizvod.popust > 0 ? (
               <>
                 <span className={styles.originalPrice}>
-                  <span className={styles.strikeThroughPrice}>{trenutniProizvod.cena} KM</span>
+                  <span className={styles.strikeThroughPrice}>{parseFloat(trenutniProizvod.cena).toFixed(2)} KM</span>
                   <span className={styles.strikeThrough}></span>
                 </span>
-                <span className={styles.price}>{discountedPrice} KM</span>
+                <span className={styles.price}>{discountedPrice.toFixed(2)} KM</span>
                 <span className={styles.discountPercent}>Ušteda: {trenutniProizvod.popust}%</span>
               </>
             ) : (
-              <span className={styles.price}>{trenutniProizvod.cena} KM</span>
+              <span className={styles.price}>{parseFloat(trenutniProizvod.cena).toFixed(2)} KM</span>
             )}
           </div>
 
@@ -405,16 +417,11 @@ export default function ProizvodDetail() {
               Dodaj u korpu
             </button>
             <button
-              className={styles.addToFavoritesBtn}
-              onClick={() => {
-                toast.info('💖 Dodano u omiljene!', {
-                  position: 'top-right',
-                  autoClose: 3000,
-                });
-              }}
+              className={`${styles.addToFavoritesBtn} ${isFavorited ? styles.favorited : ''}`}
+              onClick={handleToggleFavorite}
             >
-              <i className="fas fa-heart"></i>
-              Omiljeni
+              <i className={`${isFavorited ? 'fas' : 'far'} fa-heart`}></i>
+              {isFavorited ? 'Iz omiljenih' : 'Omiljeni'}
             </button>
           </div>
         </div>

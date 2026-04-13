@@ -2,6 +2,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import { CartProvider } from "@/context/CartContext";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 import RootContent from "./RootContent";
 
 const geistSans = Geist({
@@ -31,12 +32,14 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <CartProvider>
-          <Header/>
-          <main>
-            <RootContent>
-              {children}
-            </RootContent>
-          </main>
+          <FavoritesProvider>
+            <Header/>
+            <main>
+              <RootContent>
+                {children}
+              </RootContent>
+            </main>
+          </FavoritesProvider>
         </CartProvider>
       </body>
     </html>

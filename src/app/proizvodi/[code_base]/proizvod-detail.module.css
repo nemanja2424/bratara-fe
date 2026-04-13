@@ -405,7 +405,7 @@
 /* Color Grid */
 .colorGrid {
   display: grid;
-  grid-template-columns: repeat(auto-start, minmax(48px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(48px, 48px));
   grid-auto-flow: row;
   gap: 10px;
 }
@@ -570,6 +570,18 @@
 .addToFavoritesBtn:hover {
   background: #f5f5f5;
   transform: scale(1.02);
+}
+
+.addToFavoritesBtn.favorited {
+  background: #e74c3c;
+  color: white;
+  border-color: #c0392b;
+}
+
+.addToFavoritesBtn.favorited:hover {
+  background: #c0392b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(231, 76, 60, 0.4);
 }
 
 /* Fullscreen Modal */

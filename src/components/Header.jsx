@@ -98,15 +98,25 @@ export default function Header({ adminPanel = false }) {
                 Admin Panel
               </Link>
             )}
+            {isMounted && isLoggedIn && !(userRole === 1 || userRole === 2) && (
+              <Link href="/kupac" className={styles.profileLink}>
+                Profil
+              </Link>
+            )}
             {isMounted && isLoggedIn && (
               <button onClick={handleLogout} className={styles.logoutBtn}>
                 Odjavi se
               </button>
             )}
             {isMounted && !isLoggedIn && (
-              <Link href="/login" className={styles.loginLink}>
-                Prijavi se
-              </Link>
+              <>
+                <Link href="/login" className={styles.loginLink}>
+                  Prijavi se
+                </Link>
+                <Link href="/signup" className={styles.signupLink}>
+                  Registruj se
+                </Link>
+              </>
             )}
           </div>
         </nav>

@@ -6,25 +6,120 @@ export function useCart() {
   const [cartItems, setCartItems] = useState([]);
   const [isMounted, setIsMounted] = useState(false);
 
-  // Učitaj korpu iz localStorage pri montaži
+  // Učitaj korpu iz API-ja ako je korisnik logovan, ili iz localStorage
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(CART_STORAGE_KEY);
-      if (saved) {
-        setCartItems(JSON.parse(saved));
+    const loadCart = async () => {
+      try {
+        const token = localStorage.getItem('access_token');
+        
+        if (token) {
+          // Ako je korisnik logovan, učitaj korpu sa API-ja
+          const response = await fetch('http://127.0.0.1:5000/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user?.korpa && Array.isArray(data.user.korpa)) {
+              setCartItems(data.user.korpa);
+            }
+          } else {
+            // Ako API poziv ne uspe, koristi localStorage
+            const saved = localStorage.getItem(CART_STORAGE_KEY);
+            if (saved) {
+              setCartItems(JSON.parse(saved));
+            }
+          }
+        } else {
+          // Ako nema tokena, učitaj iz localStorage
+          const saved = localStorage.getItem(CART_STORAGE_KEY);
+          if (saved) {
+            setCartItems(JSON.parse(saved));
+          }
+        }
+      } catch (err) {
+        console.error('Greška pri učitavanju korpe:', err);
+        // Fallback na localStorage
+        try {
+          const saved = localStorage.getItem(CART_STORAGE_KEY);
+          if (saved) {
+            setCartItems(JSON.parse(saved));
+          }
+        } catch (fallbackErr) {
+          console.error('Greška pri fallback učitavanju korpe:', fallbackErr);
+        }
       }
-    } catch (err) {
-      console.error('Greška pri učitavanju korpe:', err);
-    }
-    setIsMounted(true);
+      setIsMounted(true);
+    };
+
+    loadCart();
   }, []);
 
-  // Čuva korpu u localStorage kada se promeni
+  // Očisti korpu kada se korisnik izloguje, ili ponovno učitaj ako se prijavi
+  useEffect(() => {
+    const handleAuthUpdate = async () => {
+      const token = localStorage.getItem('access_token');
+      
+      if (!token) {
+        // Korisnik se izlogovao
+        setCartItems([]);
+      } else {
+        // Korisnik se prijavio - učitaj korpu sa API-ja
+        try {
+          const response = await fetch('http://127.0.0.1:5000/api/auth/me', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user?.korpa && Array.isArray(data.user.korpa)) {
+              setCartItems(data.user.korpa);
+            }
+          }
+        } catch (err) {
+          console.error('Greška pri učitavanju korpe nakon prijave:', err);
+        }
+      }
+    };
+
+    window.addEventListener('auth-updated', handleAuthUpdate);
+    return () => window.removeEventListener('auth-updated', handleAuthUpdate);
+  }, []);
+
+  // Čuva korpu u localStorage kada se promeni (samo za neprijavljene korisnike)
   useEffect(() => {
     if (isMounted) {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+      const token = localStorage.getItem('access_token');
+      // Sačuvaj u localStorage samo ako korisnik nije logovan
+      if (!token) {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+      }
     }
   }, [cartItems, isMounted]);
+
+  // Sinhronizuj korpu sa backendom
+  const syncCartToBackend = useCallback(async (cartData, token) => {
+    try {
+      const response = await fetch('http://127.0.0.1:5000/api/auth/me', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ korpa: cartData }),
+      });
+
+      if (!response.ok) {
+        console.error('Greška pri ažuriranju korpe na backendu');
+      }
+    } catch (err) {
+      console.error('Greška pri sinhronizaciji korpe:', err);
+    }
+  }, []);
 
   // Dodaj proizvod u korpu
   const addToCart = useCallback((proizvod, quantity = 1) => {
@@ -35,55 +130,109 @@ export function useCart() {
                  item.velicina === proizvod.velicina
       );
 
+      let updated;
       if (existing) {
-        return prev.map(item =>
+        updated = prev.map(item =>
           item === existing
             ? { ...item, kolicina: item.kolicina + quantity }
             : item
         );
+      } else {
+        updated = [...prev, {
+          id: proizvod.id,
+          code_base: proizvod.code_base,
+          ime: proizvod.ime,
+          kategorija: proizvod.kategorija,
+          cena: proizvod.cena,
+          popust: proizvod.popust,
+          boja: proizvod.boja,
+          velicina: proizvod.velicina,
+          slika: proizvod.slike?.[0],
+          kolicina: quantity,
+          stanje: proizvod.stanje,
+        }];
       }
 
-      return [...prev, {
-        id: proizvod.id,
-        code_base: proizvod.code_base,
-        ime: proizvod.ime,
-        kategorija: proizvod.kategorija,
-        cena: proizvod.cena,
-        popust: proizvod.popust,
-        boja: proizvod.boja,
-        velicina: proizvod.velicina,
-        slika: proizvod.slike?.[0],
-        kolicina: quantity,
-        stanje: proizvod.stanje,
-      }];
+      // Ako je korisnik logovan, ažuriraj i na backendu
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        syncCartToBackend(updated, token).catch(err => {
+          console.error('Greška pri ažuriranju korpe na backendu:', err);
+        });
+      }
+
+      return updated;
     });
-  }, []);
+  }, [syncCartToBackend]);
 
   // Ukloni proizvod iz korpe
   const removeFromCart = useCallback((cartItemId) => {
-    setCartItems(prev => prev.filter(item => item !== cartItems[cartItemId]));
-  }, [cartItems]);
+    setCartItems(prev => {
+      const updated = prev.filter(item => item !== prev[cartItemId]);
+
+      // Ako je korisnik logovan, ažuriraj i na backendu
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        syncCartToBackend(updated, token).catch(err => {
+          console.error('Greška pri ažuriranju korpe na backendu:', err);
+        });
+      }
+
+      return updated;
+    });
+  }, [syncCartToBackend]);
 
   // Ažuriraj količinu proizvoda
   const updateQuantity = useCallback((cartItemId, newQuantity) => {
     if (newQuantity <= 0) {
-      removeFromCart(cartItemId);
+      // Ako je količina 0 ili manja, ukloni proizvod
+      setCartItems(prev => {
+        const updated = prev.filter(item => item !== prev[cartItemId]);
+
+        // Ako je korisnik logovan, ažuriraj i na backendu
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          syncCartToBackend(updated, token).catch(err => {
+            console.error('Greška pri ažuriranju korpe na backendu:', err);
+          });
+        }
+
+        return updated;
+      });
       return;
     }
 
-    setCartItems(prev => 
-      prev.map((item, idx) =>
+    setCartItems(prev => {
+      const updated = prev.map((item, idx) =>
         idx === cartItemId
           ? { ...item, kolicina: newQuantity }
           : item
-      )
-    );
-  }, [removeFromCart]);
+      );
+
+      // Ako je korisnik logovan, ažuriraj i na backendu
+      const token = localStorage.getItem('access_token');
+      if (token) {
+        syncCartToBackend(updated, token).catch(err => {
+          console.error('Greška pri ažuriranju korpe na backendu:', err);
+        });
+      }
+
+      return updated;
+    });
+  }, [syncCartToBackend]);
 
   // Očisti korpu
   const clearCart = useCallback(() => {
     setCartItems([]);
-  }, []);
+    
+    // Ako je korisnik logovan, ažuriraj i na backendu
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      syncCartToBackend([], token).catch(err => {
+        console.error('Greška pri brisanju korpe na backendu:', err);
+      });
+    }
+  }, [syncCartToBackend]);
 
   // Izračunaj ukupnu cenu
   const getTotalPrice = useCallback(() => {

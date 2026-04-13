@@ -1248,15 +1248,15 @@ export default function ProizvodiAdmin() {
                         {proizvod.popust > 0 ? (
                           <>
                             <span style={{ fontWeight: 'bold', color: '#e74c3c', fontSize: '14px' }}>
-                              {Math.round(proizvod.cena - (proizvod.cena * proizvod.popust / 100))} KM
+                              {(parseFloat(proizvod.cena) - (parseFloat(proizvod.cena) * proizvod.popust / 100)).toFixed(2)} KM
                             </span>
                             <span style={{ color: '#999', fontSize: '12px' }}>
-                              {proizvod.cena} KM
+                              {parseFloat(proizvod.cena).toFixed(2)} KM
                             </span>
                           </>
                         ) : (
                           <span style={{ fontWeight: '600', fontSize: '14px' }}>
-                            {proizvod.cena} KM
+                            {parseFloat(proizvod.cena).toFixed(2)} KM
                           </span>
                         )}
                       </div>
@@ -1767,7 +1767,7 @@ export default function ProizvodiAdmin() {
                     <p>{step1Data.opis}</p>
                     <p>
                       <i className="fas fa-tag"></i>
-                      <strong> Cena:</strong> {step1Data.cena} KM
+                      <strong> Cena:</strong> {parseFloat(step1Data.cena).toFixed(2)} KM
                     </p>
                     <p>
                       <i className="fas fa-percent"></i>

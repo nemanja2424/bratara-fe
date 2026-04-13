@@ -89,8 +89,8 @@ export default function CartModal({ onClose }) {
         <div className={styles.modalBody}>
           {cartItems.map((item, index) => {
             const discountedPrice = item.popust > 0
-              ? Math.round(item.cena - (item.cena * item.popust / 100))
-              : item.cena;
+              ? parseFloat(item.cena) - (parseFloat(item.cena) * item.popust / 100)
+              : parseFloat(item.cena);
 
             return (
               <div key={index} className={styles.cartItem}>
@@ -121,9 +121,9 @@ export default function CartModal({ onClose }) {
                   </div>
                   <div className={styles.cartItemPrice}>
                     {item.popust > 0 && (
-                      <span className={styles.originalPrice}>{item.cena} KM</span>
+                      <span className={styles.originalPrice}>{parseFloat(item.cena).toFixed(2)} KM</span>
                     )}
-                    <span>{discountedPrice} KM</span>
+                    <span>{parseFloat(discountedPrice).toFixed(2)} KM</span>
                   </div>
                 </div>
 
@@ -169,17 +169,21 @@ export default function CartModal({ onClose }) {
           <div className={styles.priceBreakdown}>
             <div className={styles.priceRow}>
               <span>Subtotal:</span>
-              <span>{originalPrice} KM</span>
+              <span>{originalPrice.toFixed(2)} KM</span>
             </div>
             {savings > 0 && (
               <div className={styles.priceRow}>
                 <span className={styles.savings}>Ušteda:</span>
-                <span className={styles.savings}>-{savings} KM</span>
+                <span className={styles.savings}>-{savings.toFixed(2)} KM</span>
               </div>
             )}
+            <div className={styles.priceRow}>
+              <span>Dostava:</span>
+              <span>10.00 KM</span>
+            </div>
             <div className={styles.priceRow + ' ' + styles.total}>
               <span>Ukupno:</span>
-              <span>{totalPrice} KM</span>
+              <span>{(totalPrice + 10).toFixed(2)} KM</span>
             </div>
           </div>
 

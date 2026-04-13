@@ -1,0 +1,157 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.3s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.closeBtn:hover {
+  color: #333;
+  background: #f0f0f0;
+}
+
+.content i {
+  font-size: 48px;
+  color: #0099cc;
+  display: block;
+  margin-bottom: 20px;
+}
+
+.content h2 {
+  font-size: 24px;
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.content p {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 30px 0;
+  line-height: 1.5;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.loginBtn,
+.signupBtn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.loginBtn {
+  background: linear-gradient(135deg, #0099cc, #0066e0);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 153, 204, 0.2);
+}
+
+.loginBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 153, 204, 0.3);
+}
+
+.signupBtn {
+  background: linear-gradient(135deg, #27ae60, #229954);
+  color: white;
+  box-shadow: 0 4px 15px rgba(39, 174, 96, 0.2);
+}
+
+.signupBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(39, 174, 96, 0.3);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .modal {
+    padding: 30px 20px;
+  }
+
+  .content h2 {
+    font-size: 20px;
+  }
+
+  .content p {
+    font-size: 13px;
+  }
+
+  .buttons {
+    gap: 10px;
+  }
+
+  .loginBtn,
+  .signupBtn {
+    padding: 10px 20px;
+    font-size: 12px;
+  }
+}
