@@ -7,33 +7,10 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useCartContext } from '@/context/CartContext';
 import { useFavoritesContext } from '@/context/FavoritesContext';
 import styles from './proizvodi.module.css';
+import { COLORS, SIZE_PRESETS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 const ITEMS_PER_PAGE = 20;
-
-// Hardkodovane boje sa hex kodovima
-const COLORS = {
-  'Crna': '#1a1a1a',
-  'Bela': '#ffffff',
-  'Crvena': '#e74c3c',
-  'Plava': '#3498db',
-  'Zelena': '#27ae60',
-  'Žuta': '#f3d112',
-  'Narandžasta': '#e67e22',
-  'Ljubičasta': '#9b59b6',
-  'Roza': '#ff69b4',
-  'Siva': '#95a5a6',
-  'Braon': '#8b4513',
-  'Bež': '#d4a574',
-  'Tirkizna': '#1abc9c',
-  'Limunska Žuta': '#cddc39',
-};
-
-// Presetovi za veličine
-const SIZE_PRESETS = {
-  obuca: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52'],
-  odeca: ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'],
-};
 
 function ProizvodiPageContent() {
   const router = useRouter();
@@ -152,7 +129,7 @@ function ProizvodiPageContent() {
   // Fetch kategorije
   const fetchKategorije = async () => {
     try {
-      const response = await fetch('https://butikirna.com/api/kategorije/get?active=true');
+      const response = await fetch('http://127.0.0.1:5000/api/kategorije/get?active=true');
       if (!response.ok) throw new Error('Greška pri učitavanju kategorija');
       const data = await response.json();
       setKategorije(data.kategorije || []);
@@ -407,29 +384,35 @@ function ProizvodiPageContent() {
             <div className={styles.filterSection}>
               <label>Veličine</label>
               <div className={styles.sizeCategory} style={{borderBottom:'2px solid #0099cc4d', paddingBottom:'8px'}}>
-                <button
-                  className={`${styles.sizeCategoryBtn} ${sizeCategory === 'obuca' ? styles.active : ''}`}
-                  onClick={() => setSizeCategory('obuca')}
-                >
-                  Obuća
-                </button>
-                <button
-                  className={`${styles.sizeCategoryBtn} ${sizeCategory === 'odeca' ? styles.active : ''}`}
-                  onClick={() => setSizeCategory('odeca')}
-                >
-                  Odeća
-                </button>
-              </div>
-              <div className={styles.sizeGrid}>
-                {SIZE_PRESETS[sizeCategory].map(size => (
+                {Object.entries({
+                  obuca: 'Obuća',
+                  odeca: 'Odeća',
+                  pantalone: 'Pantalone',
+                  bezVelicine: 'Bez veličine'
+                }).map(([key, label]) => (
                   <button
-                    key={size}
-                    className={`${styles.sizeButton} ${filterSizes.includes(size) ? styles.active : ''}`}
-                    onClick={() => handleSizeToggle(size)}
+                    key={key}
+                    className={`${styles.sizeCategoryBtn} ${sizeCategory === key ? styles.active : ''}`}
+                    onClick={() => setSizeCategory(key)}
                   >
-                    {size}
+                    {label}
                   </button>
                 ))}
+              </div>
+              <div className={styles.sizeGrid}>
+                {SIZE_PRESETS[sizeCategory]?.length > 0 ? (
+                  SIZE_PRESETS[sizeCategory].map(size => (
+                    <button
+                      key={size}
+                      className={`${styles.sizeButton} ${filterSizes.includes(size) ? styles.active : ''}`}
+                      onClick={() => handleSizeToggle(size)}
+                    >
+                      {size}
+                    </button>
+                  ))
+                ) : (
+                  <p style={{textAlign: 'center', color: '#999'}}>Nema dostupnih veličina za ovu kategoriju</p>
+                )}
               </div>
             </div>
 

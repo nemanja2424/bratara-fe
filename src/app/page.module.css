@@ -1046,6 +1046,272 @@
   animation: glow 1.5s ease infinite;
 }
 
+/* ============================
+   QUICK ADD MODAL
+   ============================ */
+
+.buttonWrapper {
+  position: relative;
+}
+
+.quickAddOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.quickAddPopup {
+  background: white;
+  border-radius: 16px;
+  padding: 15px;
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.2);
+  width: 95%;
+  max-width: 380px;
+  animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  z-index: 1001;
+}
+
+.quickAddPopup h4 {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+}
+
+.quickAddChoices {
+  max-height: 300px;
+  overflow: scroll;
+}
+
+.quickAddChoices::-webkit-scrollbar {
+  width: 3px;
+}
+
+.quickAddSection {
+  margin-bottom: 20px;
+}
+
+.quickAddSection label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 700;
+  color: #333;
+  font-size: 14px;
+}
+
+/* Boje */
+.colorOptions {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.colorOption {
+  width: 50px;
+  aspect-ratio: 1 / 1;
+  margin: 5px;
+  border-radius: 50%;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.colorOption:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 153, 204, 0.3);
+}
+
+.colorOption.active {
+  border-color: #0099cc;
+  box-shadow: 0 0 0 2px white, 0 0 0 4px #0099cc;
+}
+
+/* Veličine */
+.sizeOptions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+  gap: 10px;
+}
+
+.sizeOption {
+  padding: 10px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.sizeOption:hover {
+  border-color: #0099cc;
+  color: #0099cc;
+}
+
+.sizeOption.active {
+  background: linear-gradient(135deg, #0099cc, #0066e0);
+  color: white;
+  border-color: #0066e0;
+}
+
+/* Količina */
+.quantityBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+.quantityBox button {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: white;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 16px;
+  transition: all 0.2s ease;
+  border: 1px solid #ddd;
+}
+
+.quantityBox button:hover {
+  background: #0099cc;
+  color: white;
+  border-color: #0099cc;
+}
+
+.quantityBox button:disabled {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: not-allowed;
+  border-color: #e0e0e0;
+  opacity: 0.6;
+}
+
+.quantityBox button:disabled:hover {
+  background: #f5f5f5;
+  color: #ccc;
+  border-color: #e0e0e0;
+}
+
+.quantityBox span {
+  font-weight: 700;
+  color: #333;
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Dugmeta */
+.quickAddFooter {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 16px;
+}
+
+.cancelBtn {
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  background: white;
+  color: #666;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.cancelBtn:hover {
+  background: #f5f5f5;
+  border-color: #999;
+  color: #333;
+}
+
+.confirmBtn {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #0099cc, #0066e0);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 153, 204, 0.3);
+}
+
+.confirmBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 153, 204, 0.4);
+}
+
+/* Loading Spinner */
+.loadingSpinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  min-height: 200px;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 4px solid rgba(0, 153, 204, 0.2);
+  border-top-color: #0099cc;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingSpinner p {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+  font-weight: 500;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .hero {

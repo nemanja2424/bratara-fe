@@ -14,7 +14,7 @@ export function useCart() {
         
         if (token) {
           // Ako je korisnik logovan, učitaj korpu sa API-ja
-          const response = await fetch('https://butikirna.com/api/auth/me', {
+          const response = await fetch('http://127.0.0.1:5000/api/auth/me', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -68,7 +68,7 @@ export function useCart() {
       } else {
         // Korisnik se prijavio - učitaj korpu sa API-ja
         try {
-          const response = await fetch('https://butikirna.com/api/auth/me', {
+          const response = await fetch('http://127.0.0.1:5000/api/auth/me', {
             headers: {
               'Authorization': `Bearer ${token}`,
             },
@@ -104,7 +104,7 @@ export function useCart() {
   // Sinhronizuj korpu sa backendom
   const syncCartToBackend = useCallback(async (cartData, token) => {
     try {
-      const response = await fetch('https://butikirna.com/api/auth/me', {
+      const response = await fetch('http://127.0.0.1:5000/api/auth/me', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

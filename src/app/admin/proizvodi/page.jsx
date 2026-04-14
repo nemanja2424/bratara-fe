@@ -5,38 +5,10 @@ import { useRouter } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styles from './proizvodi.module.css';
+import { COLORS, SIZE_PRESETS, PRESET_LABELS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 const ITEMS_PER_PAGE = 10;
-
-// Hardkodovane boje sa hex kodovima
-const COLORS = {
-  'Crna': '#1a1a1a',
-  'Bela': '#ffffff',
-  'Crvena': '#e74c3c',
-  'Plava': '#3498db',
-  'Zelena': '#27ae60',
-  'Žuta': '#f3d112',
-  'Narandžasta': '#e67e22',
-  'Ljubičasta': '#9b59b6',
-  'Roza': '#ff69b4',
-  'Siva': '#95a5a6',
-  'Braon': '#8b4513',
-  'Bež': '#d4a574',
-  'Tirkizna': '#1abc9c',
-  'Limunska Žuta': '#cddc39',
-};
-
-// Presetovi za veličine
-const SIZE_PRESETS = {
-  obuca: ['36', '37', '38', '39', '40', '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', '51', '52'],
-  odeca: ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'],
-};
-
-const PRESET_LABELS = {
-  obuca: 'Obuća (EU Standard)',
-  odeca: 'Odeća (XS-5XL)',
-};
 
 export default function ProizvodiAdmin() {
   const router = useRouter();
@@ -117,7 +89,7 @@ export default function ProizvodiAdmin() {
     try {
       setKategorijeLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('https://butikirna.com/api/kategorije/get?active=true', {
+      const response = await fetch('http://127.0.0.1:5000/api/kategorije/get?active=true', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -713,9 +685,21 @@ export default function ProizvodiAdmin() {
     });
 
     // Detektuj preset na osnovu veličine
-    // Ako je numerička (samo brojevi), to je obuća
-    // Ako ima slova (XS, S, M, L, XL, XXL, 3XL, 4XL, 5XL), to je odeća
-    const detectedPreset = /^\d+$/.test(proizvod.velicina) ? 'obuca' : 'odeca';
+    let detectedPreset = 'odeca'; // Default
+    
+    if (!proizvod.velicina || proizvod.velicina.trim() === '') {
+      detectedPreset = 'bezVelicine';
+    } else if (/^\d+$/.test(proizvod.velicina)) {
+      const sizeNum = parseInt(proizvod.velicina);
+      // 32-52 su pantalone, 36-52 su obuća
+      if (sizeNum >= 32 && sizeNum <= 52) {
+        detectedPreset = SIZE_PRESETS.pantalone.includes(proizvod.velicina) ? 'pantalone' : 'obuca';
+      } else {
+        detectedPreset = 'obuca';
+      }
+    } else {
+      detectedPreset = 'odeca';
+    }
 
     // Postavi edit mode
     setIsEditingMode(true);
@@ -1231,17 +1215,14 @@ export default function ProizvodiAdmin() {
                       </>
                     )}
                     <td className={styles.stanjeColumn}>
-                      <span className={`${styles.stanjeBadge} ${proizvod.stanje === 0 ? styles.outOfStock : ''}`}>
+                      <span 
+                        className={`${styles.stanjeBadge} ${proizvod.stanje === 0 ? styles.outOfStock : ''}`}
+                        onClick={() => !isGrouped && handleQuickEdit(proizvod)}
+                        style={{ cursor: !isGrouped ? 'pointer' : 'default' }}
+                        title={!isGrouped ? 'Klikni da izmeniš stanje' : ''}
+                      >
                         {proizvod.stanje}
                       </span>
-                      {!isGrouped && (
-                        <i 
-                          className="fas fa-pencil-alt" 
-                          style={{ cursor: 'pointer', marginLeft: '10px', color: '#007bff', fontSize: '14px' }}
-                          onClick={() => handleQuickEdit(proizvod)}
-                          title="Brzo izmeni stanje"
-                        ></i>
-                      )}
                     </td>
                     <td style={{ textAlign: 'center', padding: '12px 8px', minWidth: '100px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>

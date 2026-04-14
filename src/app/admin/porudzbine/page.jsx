@@ -6,7 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styles from './porudzbine.module.css';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 const ITEMS_PER_PAGE = 10;
 
 // Mapiranje statusa sa backend vrednostima
@@ -239,6 +239,11 @@ export default function PoruzdbineAdmin() {
                         Datum <i className={handleSortIcon('created_at')}></i>
                       </button>
                     </th>
+                    <th style={{ textAlign: 'center', padding: '12px 8px', minWidth: '100px' }}>
+                      <button className={styles.sortBtn} onClick={() => handleSort('cena')}>
+                        Cena <i className={handleSortIcon('cena')}></i>
+                      </button>
+                    </th>
                     <th className={styles.actionColumn} style={{ textAlign: 'center' }}>
                       <button className={styles.sortBtn} onClick={() => handleSort('status')}>
                         Status <i className={handleSortIcon('status')}></i>
@@ -280,6 +285,9 @@ export default function PoruzdbineAdmin() {
                         <span className={styles.datumBadge}>
                           {new Date(porudzbina.created_at).toLocaleDateString('sr-RS')}
                         </span>
+                      </td>
+                      <td style={{ textAlign: 'center', padding: '12px 8px', minWidth: '100px', fontWeight: '600' }}>
+                        <span style={{fontSize: '0.95rem'}}>{parseFloat(porudzbina.cena).toFixed(2)} KM</span>
                       </td>
                       <td className={styles.actionColumn} style={{ textAlign: 'center' }}>
                         <select

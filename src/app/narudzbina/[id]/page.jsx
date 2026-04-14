@@ -5,25 +5,9 @@ import { useRouter, useParams } from 'next/navigation';
 import { toast } from 'react-toastify';
 import Link from 'next/link';
 import styles from './narudzbina.module.css';
+import { COLORS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
-
-const COLORS = {
-  'Crna': '#1a1a1a',
-  'Bela': '#ffffff',
-  'Crvena': '#e74c3c',
-  'Plava': '#3498db',
-  'Zelena': '#27ae60',
-  'Žuta': '#f3d112',
-  'Narandžasta': '#e67e22',
-  'Ljubičasta': '#9b59b6',
-  'Roza': '#ff69b4',
-  'Siva': '#95a5a6',
-  'Braon': '#8b4513',
-  'Bež': '#d4a574',
-  'Tirkizna': '#1abc9c',
-  'Limunska Žuta': '#cddc39',
-};
+const API_BASE = 'http://127.0.0.1:5000';
 
 const MONTHS_BS = {
   0: 'januar', 1: 'februar', 2: 'mart', 3: 'april', 4: 'maj', 5: 'jun',

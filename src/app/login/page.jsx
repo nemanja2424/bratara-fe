@@ -26,7 +26,7 @@ export default function LoginPage() {
             }
 
             try {
-                const response = await fetch('https://butikirna.com/api/auth/protected', {
+                const response = await fetch('http://127.0.0.1:5000/api/auth/protected', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${access_token}`,
@@ -61,7 +61,7 @@ export default function LoginPage() {
         setLoading(true);
 
         try {
-            const response = await fetch('https://butikirna.com/api/auth/login', {
+            const response = await fetch('http://127.0.0.1:5000/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

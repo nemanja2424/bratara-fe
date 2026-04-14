@@ -5,25 +5,19 @@ import { useRouter, useParams } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styles from '../porudzbine.module.css';
+import { COLORS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 
-const COLORS = {
-  'Crna': '#1a1a1a',
-  'Bela': '#ffffff',
-  'Crvena': '#e74c3c',
-  'Plava': '#3498db',
-  'Zelena': '#27ae60',
-  'Žuta': '#f3d112',
-  'Narandžasta': '#e67e22',
-  'Ljubičasta': '#9b59b6',
-  'Roza': '#ff69b4',
-  'Siva': '#95a5a6',
-  'Braon': '#8b4513',
-  'Bež': '#d4a574',
-  'Tirkizna': '#1abc9c',
-  'Limunska Žuta': '#cddc39',
+// Mapiranje statusa sa backend vrednostima
+const STATUS_MAP = {
+  'u_pripremi': { label: 'U pripremi', value: 'u_pripremi' },
+  'u_tranzitu': { label: 'U tranzitu', value: 'u_tranzitu' },
+  'dostavljeno': { label: 'Dostavljeno', value: 'dostavljeno' },
+  'nedostavljeno': { label: 'Nije preuzeto', value: 'nedostavljeno' },
 };
+
+const STATUS_OPTIONS = Object.values(STATUS_MAP);
 
 export default function PoruzbinaDetailPage() {
   const router = useRouter();
@@ -34,6 +28,7 @@ export default function PoruzbinaDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isMounted, setIsMounted] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -70,6 +65,35 @@ export default function PoruzbinaDetailPage() {
       fetchPorudzbina();
     }
   }, [isMounted, id]);
+
+  const handleStatusChange = async (newStatus) => {
+    setUpdatingStatus(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API_BASE}/api/porudzbine/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          id: porudzbina.id,
+          status: newStatus,
+        }),
+      });
+
+      if (!response.ok) throw new Error('Greška pri ažuriranju statusa');
+
+      // Ažuriraj lokalnu porudzbinu
+      setPorudzbina(prev => ({ ...prev, status: newStatus }));
+      toast.success('✅ Status je ažuriran');
+    } catch (err) {
+      console.error('Greška:', err);
+      toast.error('⚠️ Greška pri ažuriranju statusa');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
 
   if (!isMounted) {
     return <div>Učitavanje...</div>;
@@ -168,9 +192,19 @@ export default function PoruzbinaDetailPage() {
               </div>
               <div className={styles.infoRow}>
                 <span className={styles.label}>Status:</span>
-                <span className={`${styles.statusBadge} ${styles[`status${porudzbina.status || 'pending'}`]}`}>
-                  {porudzbina.status || 'U čekanju'}
-                </span>
+                <select
+                  value={porudzbina.status || 'u_pripremi'}
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  disabled={updatingStatus}
+                  className={styles.statusSelect}
+                  title="Promeni status porudžbine"
+                >
+                  {STATUS_OPTIONS.map(status => (
+                    <option key={status.value} value={status.value}>
+                      {status.label}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
           </div>
