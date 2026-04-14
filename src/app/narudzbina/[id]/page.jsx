@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import Link from 'next/link';
 import styles from './narudzbina.module.css';
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://butikirna.com';
 
 const COLORS = {
   'Crna': '#1a1a1a',

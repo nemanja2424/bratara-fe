@@ -8,7 +8,7 @@ import { useCartContext } from '@/context/CartContext';
 import { useFavoritesContext } from '@/context/FavoritesContext';
 import styles from './proizvod-detail.module.css';
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://butikirna.com';
 
 // Hardkodovane boje sa hex kodovima
 const COLORS = {

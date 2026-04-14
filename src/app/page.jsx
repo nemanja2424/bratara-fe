@@ -8,7 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useFavoritesContext } from '@/context/FavoritesContext';
 import styles from "./page.module.css";
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://butikirna.com';
 
 export default function Home() {
   const router = useRouter();
