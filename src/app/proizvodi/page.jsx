@@ -9,7 +9,7 @@ import { useFavoritesContext } from '@/context/FavoritesContext';
 import styles from './proizvodi.module.css';
 import { COLORS, SIZE_PRESETS } from '@/constants';
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://butikirna.com';
 const ITEMS_PER_PAGE = 20;
 
 function ProizvodiPageContent() {
@@ -129,7 +129,7 @@ function ProizvodiPageContent() {
   // Fetch kategorije
   const fetchKategorije = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/kategorije/get?active=true');
+      const response = await fetch('https://butikirna.com/api/kategorije/get?active=true');
       if (!response.ok) throw new Error('Greška pri učitavanju kategorija');
       const data = await response.json();
       setKategorije(data.kategorije || []);

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import styles from './narudzbina.module.css';
 import { COLORS } from '@/constants';
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://butikirna.com';
 
 const MONTHS_BS = {
   0: 'januar', 1: 'februar', 2: 'mart', 3: 'april', 4: 'maj', 5: 'jun',
