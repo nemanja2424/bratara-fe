@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import styles from './proizvodi.module.css';
 import { COLORS, SIZE_PRESETS, PRESET_LABELS } from '@/constants';
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://butikirna.com';
 const ITEMS_PER_PAGE = 10;
 
 export default function ProizvodiAdmin() {
@@ -96,7 +96,7 @@ export default function ProizvodiAdmin() {
     try {
       setKategorijeLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('http://127.0.0.1:5000/api/kategorije/get?active=true', {
+      const response = await fetch('https://butikirna.com/api/kategorije/get?active=true', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

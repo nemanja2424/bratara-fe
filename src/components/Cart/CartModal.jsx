@@ -6,7 +6,7 @@ import { useCartContext } from '@/context/CartContext';
 import styles from './cart.module.css';
 import { COLORS } from '@/constants';
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://butikirna.com';
 
 export default function CartModal({ onClose }) {
   const router = useRouter();
