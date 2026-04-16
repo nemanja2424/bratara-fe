@@ -10,7 +10,7 @@ import { useFavoritesContext } from '@/context/FavoritesContext';
 import { COLORS } from '@/constants';
 import styles from "./page.module.css";
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 
 export default function Home() {
   const router = useRouter();
@@ -80,17 +80,15 @@ export default function Home() {
         params.append('offset', offset);
         params.append('group_by', 'code_base');
         params.append('min_stanje', 1);  // Samo dostupni proizvodi
-        params.append('sort_by', 'popust');  // Sortiraj po popustu
-        params.append('sort_order', 'desc');  // Najveći popust prvi
 
-        const response = await fetch(`${API_BASE}/api/proizvodi/get?${params}`, {
+        const response = await fetch(`${API_BASE}/api/proizvodi/preporuceno`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
         });
 
-        if (!response.ok) throw new Error('Greška pri učitavanju proizvoda');
+        if (!response.ok) throw new Error('Greška pri učitavanju preporučenih proizvoda');
         const data = await response.json();
         setProizvodi(data.proizvodi || []);
       } catch (err) {

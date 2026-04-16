@@ -6,7 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styles from './kategorije.module.css';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 const ITEMS_PER_PAGE = 50;
 
 export default function KategorijeAdmin() {
@@ -25,6 +25,7 @@ export default function KategorijeAdmin() {
   const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     kategorija: '',
+    parent: '',
   });
 
   useEffect(() => {
@@ -88,6 +89,9 @@ export default function KategorijeAdmin() {
       } else if (sortBy === 'status') {
         aVal = a.active;
         bVal = b.active;
+      } else if (sortBy === 'parent') {
+        aVal = a.parent || '';
+        bVal = b.parent || '';
       }
 
       if (typeof aVal === 'string') {
@@ -120,7 +124,7 @@ export default function KategorijeAdmin() {
 
   const handleAddClick = () => {
     setEditingId(null);
-    setFormData({ kategorija: '' });
+    setFormData({ kategorija: '', parent: '' });
     setShowModal(true);
   };
 
@@ -128,6 +132,7 @@ export default function KategorijeAdmin() {
     setEditingId(kategorija.id);
     setFormData({
       kategorija: kategorija.kategorija || '',
+      parent: kategorija.parent || '',
     });
     setShowModal(true);
   };
@@ -200,13 +205,19 @@ export default function KategorijeAdmin() {
       let body;
       if (editingId) {
         const existingKat = kategorije.find(k => k.id === editingId);
-        body = { 
-          id: editingId, 
+        body = {
+          id: editingId,
           kategorija: formData.kategorija,
-          active: existingKat?.active || true
+          active: existingKat?.active || true,
+          created_at: existingKat?.created_at || new Date().toUTCString(),
+          parent: formData.parent || null,
         };
       } else {
-        body = { kategorija: formData.kategorija };
+        body = {
+          kategorija: formData.kategorija,
+          created_at: new Date().toUTCString(),
+          parent: formData.parent || null,
+        };
       }
 
       const response = await fetch(endpoint, {
@@ -245,7 +256,7 @@ export default function KategorijeAdmin() {
       }
 
       setShowModal(false);
-      setFormData({ kategorija: '' });
+      setFormData({ kategorija: '', parent: '' });
     } catch (err) {
       console.error('Greška pri čuvanju kategorije:', err);
       toast.error(`❌ ${err.message}`, {
@@ -308,7 +319,7 @@ export default function KategorijeAdmin() {
   const handleCloseModal = () => {
     setShowModal(false);
     setEditingId(null);
-    setFormData({ kategorija: '' });
+    setFormData({ kategorija: '', parent: '' });
   };
 
   const getSortIcon = (column) => {
@@ -424,6 +435,11 @@ export default function KategorijeAdmin() {
                       Naziv <i className={getSortIcon('name')}></i>
                     </button>
                   </th>
+                  <th className={styles.parentColumn}>
+                    <button className={styles.sortBtn} onClick={() => handleSort('parent')}>
+                      Parent <i className={getSortIcon('parent')}></i>
+                    </button>
+                  </th>
                   <th className={styles.statusColumn}>
                     <button className={styles.sortBtn} onClick={() => handleSort('status')}>
                       Status <i className={getSortIcon('status')}></i>
@@ -443,6 +459,9 @@ export default function KategorijeAdmin() {
                         <i className="fas fa-tag"></i>
                         {kat.kategorija}
                       </div>
+                    </td>
+                    <td className={styles.parentColumn}>
+                      {kat.parent || '-'}
                     </td>
                     <td className={styles.statusColumn}>
                       <button
@@ -535,6 +554,23 @@ export default function KategorijeAdmin() {
                   placeholder="npr. Patike, Duksevi..."
                   autoFocus
                 />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>
+                  <i className="fas fa-sitemap"></i>
+                  Parent Kategorija
+                </label>
+                <select
+                  name="parent"
+                  value={formData.parent}
+                  onChange={handleInputChange}
+                >
+                  <option value="">Bez parenta</option>
+                  <option value="Obuća">Obuća</option>
+                  <option value="Odeća">Odeća</option>
+                  <option value="Torbe">Torbe</option>
+                </select>
               </div>
 
               <div className={styles.modalActions}>

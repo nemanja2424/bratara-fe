@@ -513,6 +513,7 @@
   font-weight: 600;
   color: #333;
   background: transparent;
+  padding: 0;
 }
 
 .quantityInput:focus {

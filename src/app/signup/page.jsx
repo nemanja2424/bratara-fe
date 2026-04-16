@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useUserContext } from '@/context/UserContext';
 import styles from './signup.module.css';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 
 const VELIKI_GRADOVI = [
   'Sarajevo',

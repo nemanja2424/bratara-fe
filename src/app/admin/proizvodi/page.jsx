@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import styles from './proizvodi.module.css';
 import { COLORS, SIZE_PRESETS, PRESET_LABELS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 const ITEMS_PER_PAGE = 10;
 
 export default function ProizvodiAdmin() {
@@ -80,6 +80,13 @@ export default function ProizvodiAdmin() {
   const [filterColors, setFilterColors] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Recommended Products Modal
+  const [showRecommendedModal, setShowRecommendedModal] = useState(false);
+  const [preporuceni, setPreporuceni] = useState([]);
+  const [availableProducts, setAvailableProducts] = useState([]);
+  const [recommendedLoading, setRecommendedLoading] = useState(false);
+  const [searchRecommendedInput, setSearchRecommendedInput] = useState('');
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -89,7 +96,7 @@ export default function ProizvodiAdmin() {
     try {
       setKategorijeLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('https://butikirna.com/api/kategorije/get?active=true', {
+      const response = await fetch('http://127.0.0.1:5000/api/kategorije/get?active=true', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -107,6 +114,203 @@ export default function ProizvodiAdmin() {
   useEffect(() => {
     fetchKategorije();
   }, []);
+
+  // Fetch recommended products
+  const fetchPreporuceni = async () => {
+    try {
+      setRecommendedLoading(true);
+      const response = await fetch(`${API_BASE}/api/preporuceno/get`);
+      if (!response.ok) throw new Error('Greška pri učitavanju preporučenih proizvoda');
+      const data = await response.json();
+      setPreporuceni(data.preporuceni || []);
+    } catch (err) {
+      console.error('Greška pri učitavanju preporučenih proizvoda:', err);
+      toast.error('⚠️ Greška pri učitavanju preporučenih proizvoda');
+    } finally {
+      setRecommendedLoading(false);
+    }
+  };
+
+  // Fetch available products for adding to recommended
+  const fetchAvailableProducts = async () => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const params = new URLSearchParams();
+      params.append('limit', 100);
+      params.append('offset', 0);
+      params.append('group_by', 'code_base');
+
+      if (searchRecommendedInput) {
+        params.append('search', searchRecommendedInput);
+      }
+
+      const response = await fetch(
+        `${API_BASE}/api/proizvodi/get?${params.toString()}`,
+        {
+          headers: { 'Authorization': `Bearer ${token}` },
+        }
+      );
+      if (!response.ok) throw new Error('Greška pri učitavanju proizvoda');
+      const data = await response.json();
+      
+      // Filter out products that are already recommended
+      const recommendedCodes = preporuceni.map(p => p.code_base);
+      const filtered = (data.proizvodi || []).filter(p => !recommendedCodes.includes(p.code_base));
+      setAvailableProducts(filtered);
+    } catch (err) {
+      console.error('Greška pri učitavanju dostupnih proizvoda:', err);
+      toast.error('⚠️ Greška pri učitavanju dostupnih proizvoda');
+    }
+  };
+
+  // Add product to recommended
+  const handleAddRecommended = async (codeBase) => {
+    // Validate max 12
+    if (preporuceni.length >= 12) {
+      toast.error('⚠️ Maksimalno 12 preporučenih proizvoda!');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API_BASE}/api/preporuceno/post`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code_base: codeBase }),
+      });
+      
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.message || 'Greška pri dodavanju proizvoda');
+      }
+      
+      toast.success('✅ Proizvod je dodan u preporučene');
+      await fetchPreporuceni();
+      await fetchAvailableProducts();
+    } catch (err) {
+      console.error('Greška:', err);
+      toast.error(`⚠️ ${err.message}`);
+    }
+  };
+
+  // Remove product from recommended and reorder others
+  const handleRemoveRecommended = async (codeBase) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API_BASE}/api/preporuceno/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code_base: codeBase }),
+      });
+      
+      if (!response.ok) throw new Error('Greška pri brisanju proizvoda');
+      
+      toast.success('✅ Proizvod je obrisan iz preporučenih');
+      
+      // Fetch all remaining products and sort them by current redosled
+      const currentPreporuceni = await (await fetch(`${API_BASE}/api/preporuceno/get`)).json();
+      let items = currentPreporuceni.preporuceni || [];
+      
+      // Sort by redosled first to ensure proper order
+      items = items.sort((a, b) => a.redosled - b.redosled);
+      
+      // Reorder all items SEQUENTIALLY to have sequential redoslede (1, 2, 3, ...)
+      for (let index = 0; index < items.length; index++) {
+        const item = items[index];
+        const newRedosled = index + 1;
+        
+        if (item.redosled !== newRedosled) {
+          const patchResponse = await fetch(`${API_BASE}/api/preporuceno/patch`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              code_base: item.code_base,
+              redosled: newRedosled,
+            }),
+          });
+          
+          if (!patchResponse.ok) {
+            console.error(`Greška pri ažuriranju redosleda za ${item.code_base}`);
+          }
+        }
+      }
+      
+      await fetchPreporuceni();
+      await fetchAvailableProducts();
+    } catch (err) {
+      console.error('Greška:', err);
+      toast.error('⚠️ Greška pri brisanju proizvoda');
+    }
+  };
+
+  // Move product up in recommended list
+  const handleMoveUp = async (currentRedosled) => {
+    if (currentRedosled <= 1) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API_BASE}/api/preporuceno/patch`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          redosled_1: currentRedosled - 1,
+          redosled_2: currentRedosled,
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Greška pri premještanju proizvoda');
+      
+      await fetchPreporuceni();
+    } catch (err) {
+      console.error('Greška:', err);
+      toast.error('⚠️ Greška pri premještanju proizvoda');
+    }
+  };
+
+  // Move product down in recommended list
+  const handleMoveDown = async (currentRedosled, totalCount) => {
+    if (currentRedosled >= totalCount) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API_BASE}/api/preporuceno/patch`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          redosled_1: currentRedosled,
+          redosled_2: currentRedosled + 1,
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Greška pri premještanju proizvoda');
+      
+      await fetchPreporuceni();
+    } catch (err) {
+      console.error('Greška:', err);
+      toast.error('⚠️ Greška pri premještanju proizvoda');
+    }
+  };
+
+  // Open recommended products modal
+  const handleOpenRecommendedModal = async () => {
+    setShowRecommendedModal(true);
+    setSearchRecommendedInput('');
+    await fetchPreporuceni();
+    // Fetch available products will be called when preporuceni updates
+  };
 
   // Fetch proizvodi - server-side filtering, sorting, searching
   const fetchProizvodi = async () => {
@@ -177,6 +381,13 @@ export default function ProizvodiAdmin() {
     setFilterColors([]);
     setCurrentPage(1);
   }, [isGrouped]);
+
+  // Fetch available products when preporuceni changes or search input changes
+  useEffect(() => {
+    if (showRecommendedModal && preporuceni.length >= 0) {
+      fetchAvailableProducts();
+    }
+  }, [showRecommendedModal, preporuceni, searchRecommendedInput]);
 
   // Grupisanje proizvoda po code_base
   const getGroupedProizvodi = () => {
@@ -351,10 +562,6 @@ export default function ProizvodiAdmin() {
   const handleStep1Submit = () => {
     if (!step1Data.ime.trim()) {
       toast.error('Unesi naziv proizvoda', { position: 'top-right' });
-      return;
-    }
-    if (!step1Data.opis.trim()) {
-      toast.error('Unesi opis proizvoda', { position: 'top-right' });
       return;
     }
     if (!step1Data.cena || step1Data.cena <= 0) {
@@ -651,8 +858,14 @@ export default function ProizvodiAdmin() {
   };
 
   const handleEditProizvod = (proizvod) => {
+    // Ako je grupisano i nema originalItem, pronađi prvi proizvod sa tim code_base
+    let selectedProizvod = proizvod.originalItem || proizvod;
+    if (isGrouped && !proizvod.originalItem) {
+      selectedProizvod = proizvodi.find(p => p.code_base === proizvod.code_base) || proizvod;
+    }
+
     // Učitaj SVE varijante sa istim code_base
-    const allVariantsForProduct = proizvodi.filter(p => p.code_base === proizvod.code_base);
+    const allVariantsForProduct = proizvodi.filter(p => p.code_base === selectedProizvod.code_base);
     
     // Grupiraj po boji
     const groupedByColor = {};
@@ -687,13 +900,13 @@ export default function ProizvodiAdmin() {
     // Detektuj preset na osnovu veličine
     let detectedPreset = 'odeca'; // Default
     
-    if (!proizvod.velicina || proizvod.velicina.trim() === '') {
+    if (!selectedProizvod.velicina || selectedProizvod.velicina.trim() === '') {
       detectedPreset = 'bezVelicine';
-    } else if (/^\d+$/.test(proizvod.velicina)) {
-      const sizeNum = parseInt(proizvod.velicina);
+    } else if (/^\d+$/.test(selectedProizvod.velicina)) {
+      const sizeNum = parseInt(selectedProizvod.velicina);
       // 32-52 su pantalone, 36-52 su obuća
       if (sizeNum >= 32 && sizeNum <= 52) {
-        detectedPreset = SIZE_PRESETS.pantalone.includes(proizvod.velicina) ? 'pantalone' : 'obuca';
+        detectedPreset = SIZE_PRESETS.pantalone.includes(selectedProizvod.velicina) ? 'pantalone' : 'obuca';
       } else {
         detectedPreset = 'obuca';
       }
@@ -703,20 +916,20 @@ export default function ProizvodiAdmin() {
 
     // Postavi edit mode
     setIsEditingMode(true);
-    setEditingProizvodCodeBase(proizvod.code_base);
+    setEditingProizvodCodeBase(selectedProizvod.code_base);
 
     // Popuni formu
     setStep1Data({
-      ime: proizvod.ime,
-      opis: proizvod.opis,
-      cena: proizvod.cena || '',
-      popust: proizvod.popust || 0,
-      kategorija: proizvod.kategorija,
+      ime: selectedProizvod.ime,
+      opis: selectedProizvod.opis,
+      cena: selectedProizvod.cena || '',
+      popust: selectedProizvod.popust || 0,
+      kategorija: selectedProizvod.kategorija,
       preset: detectedPreset,
     });
 
     setColorVariants(groupedByColor);
-    setFavoriteBoja(proizvod.fav ? proizvod.boja : null);
+    setFavoriteBoja(selectedProizvod.fav ? selectedProizvod.boja : null);
     
     // Ako je grupisano, preskočir Step 2 i idi direktno na Step 1
     if (isGrouped) {
@@ -727,9 +940,9 @@ export default function ProizvodiAdmin() {
       Object.entries(groupedByColor).forEach(([colorName, colorData]) => {
         colorData.selectedSizes.forEach(sizeObj => {
           allVariants.push({
-            ime: proizvod.ime,
-            opis: proizvod.opis,
-            kategorija: proizvod.kategorija,
+            ime: selectedProizvod.ime,
+            opis: selectedProizvod.opis,
+            kategorija: selectedProizvod.kategorija,
             boja: colorName,
             velicina: sizeObj.velicina,
             stanje: parseInt(sizeObj.stanje) || 0,
@@ -741,7 +954,7 @@ export default function ProizvodiAdmin() {
       setVariants(allVariants);
       setShowModal(true);
       setModalStep(1);
-      toast.info(`Uređivanje proizvoda: ${proizvod.ime} - sve varijante učitane!`, { position: 'top-right' });
+      toast.info(`Uređivanje proizvoda: ${selectedProizvod.ime} - sve varijante učitane!`, { position: 'top-right' });
     } else {
       // Obično menjanje - Step 2 sa izborom boje
       setIsGroupedEdit(false);
@@ -792,10 +1005,16 @@ export default function ProizvodiAdmin() {
           <h1>Proizvodi</h1>
           <p>Upravljajte proizvodima vašeg online shopu</p>
         </div>
-        <button className={styles.addButton} onClick={handleOpenModal}>
-          <i className="fas fa-plus"></i>
-          Dodaj Proizvod
-        </button>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <button className={styles.addButton} onClick={handleOpenRecommendedModal}>
+            <i className="fas fa-star"></i>
+            Preporučeni
+          </button>
+          <button className={styles.addButton} onClick={handleOpenModal}>
+            <i className="fas fa-plus"></i>
+            Dodaj Proizvod
+          </button>
+        </div>
       </div>
 
       {/* Loading State */}
@@ -1262,7 +1481,7 @@ export default function ProizvodiAdmin() {
                       <button 
                         className={styles.actionBtnEdit} 
                         title="Uredi"
-                        onClick={() => handleEditProizvod(isGrouped ? proizvod.originalItem : proizvod)}
+                        onClick={() => handleEditProizvod(proizvod)}
                       >
                         <i className="fas fa-edit"></i>
                       </button>
@@ -2081,6 +2300,295 @@ export default function ProizvodiAdmin() {
                 }}
               >
                 <i className="fas fa-times"></i> Otkaži
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Recommended Products Modal */}
+      {showRecommendedModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            overflow: 'auto',
+          }}
+          onClick={() => setShowRecommendedModal(false)}
+        >
+          <div 
+            style={{
+              background: 'white',
+              padding: '32px',
+              borderRadius: '12px',
+              maxWidth: '900px',
+              width: '95%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+              zIndex: 1001,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h2 style={{ margin: 0, color: '#333', fontSize: '24px' }}>
+                <i className="fas fa-star"></i> Preporučeni Proizvodi
+              </h2>
+              <button 
+                onClick={() => setShowRecommendedModal(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  fontSize: '24px',
+                  cursor: 'pointer',
+                  color: '#999',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {recommendedLoading ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: '#0099cc' }}>
+                <i className="fas fa-spinner fa-spin" style={{ fontSize: '32px' }}></i>
+                <p style={{ marginTop: '12px' }}>Učitavanje...</p>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                {/* Left Column - Recommended Products */}
+                <div style={{
+                  border: '2px solid rgba(0, 153, 204, 0.2)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  backgroundColor: 'rgba(0, 153, 204, 0.03)',
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ margin: 0, color: '#333' }}>
+                      Trenutni Preporučeni
+                    </h3>
+                    <span style={{
+                      padding: '6px 12px',
+                      borderRadius: '20px',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold',
+                      backgroundColor: preporuceni.length >= 12 ? '#dc3545' : '#0099cc',
+                      color: 'white',
+                    }}>
+                      {preporuceni.length}/12
+                    </span>
+                  </div>
+                  
+                  {preporuceni.length >= 12 && (
+                    <div style={{
+                      padding: '12px',
+                      marginBottom: '12px',
+                      backgroundColor: '#dc3545',
+                      color: 'white',
+                      borderRadius: '6px',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold',
+                    }}>
+                      ⚠️ Maksimalno 12 proizvoda! Obriši jedan da dodaš novi.
+                    </div>
+                  )}
+
+                  {preporuceni.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                      <i className="fas fa-inbox" style={{ fontSize: '32px', marginBottom: '12px' }}></i>
+                      <p>Nema preporučenih proizvoda</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '500px', overflowY: 'auto' }}>
+                      {preporuceni.map((item, index) => (
+                        <div
+                          key={item.id}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px',
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            border: '1px solid #ddd',
+                          }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>
+                              {item.redosled}. {item.ime}
+                            </div>
+                            <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                              {item.code_base}
+                            </div>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button
+                              onClick={() => handleMoveUp(item.redosled)}
+                              disabled={item.redosled <= 1}
+                              style={{
+                                padding: '8px 12px',
+                                background: item.redosled <= 1 ? '#ccc' : '#0099cc',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: item.redosled <= 1 ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              <i className="fas fa-arrow-up"></i>
+                            </button>
+                            <button
+                              onClick={() => handleMoveDown(item.redosled, preporuceni.length)}
+                              disabled={item.redosled >= preporuceni.length}
+                              style={{
+                                padding: '8px 12px',
+                                background: item.redosled >= preporuceni.length ? '#ccc' : '#0099cc',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: item.redosled >= preporuceni.length ? 'not-allowed' : 'pointer',
+                              }}
+                            >
+                              <i className="fas fa-arrow-down"></i>
+                            </button>
+                            <button
+                              onClick={() => handleRemoveRecommended(item.code_base)}
+                              style={{
+                                padding: '8px 12px',
+                                background: '#dc3545',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '4px',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <i className="fas fa-trash"></i>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Column - Available Products */}
+                <div style={{
+                  border: '2px solid rgba(100, 200, 100, 0.2)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  backgroundColor: preporuceni.length >= 12 ? 'rgba(150, 150, 150, 0.05)' : 'rgba(100, 200, 100, 0.03)',
+                }}>
+                  <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>
+                    Dostupni Proizvodi
+                  </h3>
+                  
+                  {preporuceni.length >= 12 && (
+                    <div style={{
+                      padding: '12px',
+                      marginBottom: '12px',
+                      backgroundColor: '#f8d7da',
+                      color: '#721c24',
+                      borderRadius: '6px',
+                      fontSize: '0.9rem',
+                      fontWeight: 'bold',
+                      border: '1px solid #f5c6cb',
+                    }}>
+                      🔒 Maksimalno dostignut limit. Obriši proizvod sa lijeve strane da dodaš novi.
+                    </div>
+                  )}
+
+                  <input
+                    type="text"
+                    placeholder="Pretraži proizvode..."
+                    value={searchRecommendedInput}
+                    onChange={(e) => setSearchRecommendedInput(e.target.value)}
+                    disabled={preporuceni.length >= 12}
+                    style={{
+                      width: '100%',
+                      padding: '10px 12px',
+                      marginBottom: '12px',
+                      border: '1px solid #ccc',
+                      borderRadius: '4px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box',
+                      opacity: preporuceni.length >= 12 ? 0.6 : 1,
+                      cursor: preporuceni.length >= 12 ? 'not-allowed' : 'text',
+                    }}
+                  />
+                  {availableProducts.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#999', padding: '20px' }}>
+                      <i className="fas fa-check-circle" style={{ fontSize: '32px', marginBottom: '12px', color: '#28a745' }}></i>
+                      <p>Svi proizvodi su preporučeni! 🎉</p>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '500px', overflowY: 'auto' }}>
+                      {availableProducts.map((item) => (
+                        <div
+                          key={item.code_base}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '12px',
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            border: '1px solid #ddd',
+                          }}
+                        >
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>
+                              {item.ime}
+                            </div>
+                            <div style={{ fontSize: '0.85rem', color: '#666' }}>
+                              {item.code_base} • {item.cena} KM
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleAddRecommended(item.code_base)}
+                            disabled={preporuceni.length >= 12}
+                            style={{
+                              padding: '8px 16px',
+                              background: preporuceni.length >= 12 ? '#ccc' : '#28a745',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '4px',
+                              cursor: preporuceni.length >= 12 ? 'not-allowed' : 'pointer',
+                              fontWeight: 'bold',
+                            }}
+                          >
+                            <i className="fas fa-plus"></i> Dodaj
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Close Button */}
+            <div style={{ textAlign: 'center', marginTop: '24px' }}>
+              <button
+                onClick={() => setShowRecommendedModal(false)}
+                style={{
+                  padding: '12px 32px',
+                  background: '#6c757d',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '4px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  fontSize: '16px',
+                }}
+              >
+                Zatvori
               </button>
             </div>
           </div>

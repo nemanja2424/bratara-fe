@@ -7,7 +7,7 @@ import { useCartContext } from '@/context/CartContext';
 import styles from './poruci.module.css';
 import { COLORS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 
 const VELIKI_GRADOVI = [
   'Sarajevo',
@@ -173,9 +173,10 @@ export default function PorucPage() {
 
       // Kreiraj payload sa prilagođenim količinama ako postoje
       const korpaZaSizbanje = cartItems.map(item => {
-        const adjustedQty = adjustedQuantities[item.code_base] || item.kolicina;
+        const fullCode = `${item.code_base}-${item.code_variant}`;
+        const adjustedQty = adjustedQuantities[fullCode] || item.kolicina;
         return {
-          code: item.code_base,
+          code: fullCode,
           kolicina: adjustedQty,
         };
       });
@@ -250,7 +251,10 @@ export default function PorucPage() {
   };
 
   const handleRemoveStockProblemProduct = (code) => {
-    const itemIndex = cartItems.findIndex(item => item.code_base === code);
+    // code je u formatu "code_base-code_variant"
+    const itemIndex = cartItems.findIndex(item => 
+      `${item.code_base}-${item.code_variant}` === code
+    );
     if (itemIndex >= 0) {
       removeFromCart(itemIndex);
       // Nastavi na sledeći problem ili zatvori modal
@@ -321,7 +325,7 @@ export default function PorucPage() {
               </div>
 
               <div className={styles.actions}>
-                {currentProblem.available === 0 ? (
+                {currentProblem.available < 1 ? (
                   <div className={styles.actionGroup}>
                     <p>Nažalost, nema više ovog proizvoda na stanju.</p>
                     <button 

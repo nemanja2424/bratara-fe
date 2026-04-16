@@ -9,7 +9,7 @@ import { useFavoritesContext } from '@/context/FavoritesContext';
 import styles from './proizvod-detail.module.css';
 import { COLORS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 
 export default function ProizvodDetail() {
   const router = useRouter();
