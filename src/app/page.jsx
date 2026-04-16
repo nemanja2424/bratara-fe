@@ -106,10 +106,12 @@ export default function Home() {
     <div className={styles.page}>
       <div className={styles.hero}>
         <div className={styles.heroContent}>
-          <div className={styles.heroBadge}>
-            <span className={styles.badgeDot}></span>
-            Kolekciјa 2026 - Novi Proizvodi
-          </div>
+          <a href="/proizvodi">
+            <div className={styles.heroBadge}>
+              <span className={styles.badgeDot}></span>
+              Kolekciјa 2026 - Novi Proizvodi
+            </div>
+          </a>
           <h1>Butik Irna</h1>
           <p>Pronađite savršenu stilaciju za svaku priliku</p>
           <div className={styles.heroCtas}>

@@ -16,11 +16,12 @@
   background: linear-gradient(135deg, rgba(1, 79, 180, 0.05) 0%, rgba(0, 102, 224, 0.08) 50%, rgba(0, 153, 204, 0.05) 100%);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  padding: 100px 100px;
+  padding: 20px 100px;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  grid-template-columns: 1fr;
+  gap: 0;
   align-items: center;
+  justify-items: center;
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
@@ -29,6 +30,7 @@
   box-shadow: 0 8px 32px rgba(0, 70, 167, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.3);
   position: relative;
   overflow: hidden;
+  min-height: 400px;
 }
 
 .hero::before {
@@ -61,8 +63,15 @@
   display: flex;
   flex-direction: column;
   gap: 25px;
-  position: relative;
+  position: absolute;
   z-index: 2;
+  text-align: center;
+  align-items: center;
+  width: 100%;
+  max-width: 600px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .heroBadge {
@@ -79,7 +88,17 @@
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   width: fit-content;
-  animation: slideInLeft 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: slideInDown 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Skloni underline animaciju sa badgea */
+.heroBadge::after {
+  display: none !important;
+}
+
+/* Skloni underline animaciju sa linka koji sadrži badge */
+a:has(> .heroBadge)::after {
+  display: none !important;
 }
 
 .badgeDot {
@@ -100,7 +119,7 @@
   -webkit-text-fill-color: transparent;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  animation: slideInLeft 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: slideInDown 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .heroContent p {
@@ -108,29 +127,32 @@
   color: #333;
   font-weight: 500;
   margin: 0;
-  animation: slideInLeft 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: slideInDown 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .heroCtas {
   display: flex;
   gap: 15px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .heroSubtext {
   font-size: 0.95rem;
   color: #666;
   margin: 10px 0 0 0 !important;
-  animation: slideInLeft 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: slideInDown 0.9s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .heroImage {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 400px;
-  position: relative;
-  z-index: 1;
+  max-height: 200px;
+  position: absolute;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
 }
 
 .orbitContainer {
@@ -212,6 +234,7 @@
   text-transform: uppercase;
   letter-spacing: 0.8px;
   box-shadow: 0 0 20px rgba(0, 70, 167, 0.3);
+  animation: slideInDown 1s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .primaryBtn::before,
@@ -332,6 +355,7 @@
   z-index: 4;
   filter: drop-shadow(0 4px 15px rgba(0, 70, 167, 0.2));
   animation: pulse 2s ease-in-out infinite;
+  display: none;
 }
 
 .fashionOrbit {
@@ -406,6 +430,17 @@
   }
   50% {
     transform: translateY(-30px);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
