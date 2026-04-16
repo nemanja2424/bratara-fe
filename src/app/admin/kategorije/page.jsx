@@ -6,7 +6,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styles from './kategorije.module.css';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 const ITEMS_PER_PAGE = 50;
 
 export default function KategorijeAdmin() {

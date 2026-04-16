@@ -25,7 +25,7 @@ export default function AdminLayout({ children }) {
         }
 
         try {
-          const response = await fetch('https://butikirna.com/api/auth/protected', {
+          const response = await fetch('http://127.0.0.1:5000/api/auth/protected', {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,

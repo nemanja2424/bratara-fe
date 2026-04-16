@@ -7,7 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import styles from './proizvodi.module.css';
 import { COLORS, SIZE_PRESETS, PRESET_LABELS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 const ITEMS_PER_PAGE = 10;
 
 export default function ProizvodiAdmin() {
@@ -87,6 +87,12 @@ export default function ProizvodiAdmin() {
   const [recommendedLoading, setRecommendedLoading] = useState(false);
   const [searchRecommendedInput, setSearchRecommendedInput] = useState('');
 
+  // Image Gallery Modal
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedProizvodForImages, setSelectedProizvodForImages] = useState(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [imageThumbScrollPos, setImageThumbScrollPos] = useState(0);
+
   useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -96,7 +102,7 @@ export default function ProizvodiAdmin() {
     try {
       setKategorijeLoading(true);
       const token = localStorage.getItem('access_token');
-      const response = await fetch('https://butikirna.com/api/kategorije/get?active=true', {
+      const response = await fetch('http://127.0.0.1:5000/api/kategorije/get?active=true', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -1406,6 +1412,7 @@ export default function ProizvodiAdmin() {
                         Kategorija <i className={handleSortIcon('kategorija')}></i>
                       </button>
                     </th>
+                    <th style={{ textAlign: 'center', padding: '12px 8px', minWidth: '80px' }}>Slike</th>
                     <th className={styles.actionColumn} style={{ textAlign: 'center' }}>Akcije</th>
                   </tr>
                 </thead>
@@ -1476,6 +1483,44 @@ export default function ProizvodiAdmin() {
                     </td>
                     <td className={styles.categoryColumn}>
                       {proizvod.kategorija}
+                    </td>
+                    <td style={{ textAlign: 'center', padding: '2px', minWidth: '80px' }}>
+                      {proizvod.slike && proizvod.slike.length > 0 ? (
+                        <button
+                          onClick={() => {
+                            setSelectedProizvodForImages(proizvod);
+                            setSelectedImageIndex(0);
+                            setImageThumbScrollPos(0);
+                            setShowImageModal(true);
+                          }}
+                          style={{
+                            border: 'none',
+                            background: 'none',
+                            padding: '0',
+                            cursor: 'pointer',
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <img
+                            src={`${API_BASE}/api/proizvodi/slike/${proizvod.slike[0]}`}
+                            alt="Thumbnail"
+                            style={{
+                              maxWidth: '100%',
+                              maxHeight: '60px',
+                              objectFit: 'contain'
+                            }}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </button>
+                      ) : (
+                        <span style={{ color: '#999', fontSize: '12px' }}>—</span>
+                      )}
                     </td>
                     <td className={styles.actionColumn}>
                       <button 
@@ -2594,6 +2639,267 @@ export default function ProizvodiAdmin() {
           </div>
         </div>
       )}
+
+      {/* Image Gallery Modal */}
+      {showImageModal && selectedProizvodForImages && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+          onClick={() => setShowImageModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '12px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              width: '1000px',
+              zIndex: 2001,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => setShowImageModal(false)}
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                background: 'rgba(0, 0, 0, 0.5)',
+                border: 'none',
+                color: 'white',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 2002,
+              }}
+            >
+              <i className="fas fa-times"></i>
+            </button>
+
+            {/* Main Image */}
+            <div
+              style={{
+                position: 'relative',
+                backgroundColor: '#f0f0f0',
+                height: '550px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                flex: 1,
+              }}
+            >
+              {selectedProizvodForImages.slike && selectedProizvodForImages.slike.length > 0 ? (
+                <>
+                  <img
+                    src={`${API_BASE}/api/proizvodi/slike/${selectedProizvodForImages.slike[selectedImageIndex]}`}
+                    alt={`Slika ${selectedImageIndex + 1}`}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                    }}
+                    onError={(e) => {
+                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="16" fill="%23999"%3ENema slike%3C/text%3E%3C/svg%3E';
+                    }}
+                  />
+
+                  {/* Navigation Arrows */}
+                  {selectedProizvodForImages.slike.length > 1 && (
+                    <>
+                      <button
+                        onClick={() =>
+                          setSelectedImageIndex((prev) =>
+                            prev === 0 ? selectedProizvodForImages.slike.length - 1 : prev - 1
+                          )
+                        }
+                        style={{
+                          position: 'absolute',
+                          left: '16px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: 'none',
+                          color: 'white',
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          fontSize: '18px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 2002,
+                        }}
+                      >
+                        <i className="fas fa-chevron-left"></i>
+                      </button>
+                      <button
+                        onClick={() =>
+                          setSelectedImageIndex((prev) =>
+                            prev === selectedProizvodForImages.slike.length - 1 ? 0 : prev + 1
+                          )
+                        }
+                        style={{
+                          position: 'absolute',
+                          right: '16px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: 'none',
+                          color: 'white',
+                          width: '44px',
+                          height: '44px',
+                          borderRadius: '50%',
+                          cursor: 'pointer',
+                          fontSize: '18px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          zIndex: 2002,
+                        }}
+                      >
+                        <i className="fas fa-chevron-right"></i>
+                      </button>
+                    </>
+                  )}
+                </>
+              ) : (
+                <div style={{ color: '#999', fontSize: '16px' }}>
+                  <i className="fas fa-image" style={{ fontSize: '48px', marginBottom: '12px' }}></i>
+                  <p>Nema dostupnih slika</p>
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnails Carousel */}
+            {selectedProizvodForImages.slike && selectedProizvodForImages.slike.length > 1 && (
+              <div
+                style={{
+                  padding: '16px',
+                  backgroundColor: '#f9f9f9',
+                  borderTop: '1px solid #eee',
+                  display: 'flex',
+                  gap: '8px',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflowX: 'auto',
+                }}
+              >
+                <button
+                  onClick={() => setImageThumbScrollPos(Math.max(0, imageThumbScrollPos - 100))}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#666',
+                    fontSize: '16px',
+                    padding: '8px',
+                  }}
+                >
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '8px',
+                    overflowX: 'auto',
+                    flex: 1,
+                    maxWidth: '400px',
+                  }}
+                >
+                  {selectedProizvodForImages.slike.map((slika, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedImageIndex(index)}
+                      style={{
+                        border: selectedImageIndex === index ? '3px solid #007bff' : '2px solid #ddd',
+                        borderRadius: '6px',
+                        padding: '2px',
+                        cursor: 'pointer',
+                        minWidth: '60px',
+                        maxWidth: '60px',
+                        height: '60px',
+                        background: 'none',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <img
+                        src={`${API_BASE}/api/proizvodi/slike/${slika}`}
+                        alt={`Thumbnail ${index + 1}`}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                        }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setImageThumbScrollPos(imageThumbScrollPos + 100)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#666',
+                    fontSize: '16px',
+                    padding: '8px',
+                  }}
+                >
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+              </div>
+            )}
+
+            {/* Info Footer */}
+            <div
+              style={{
+                padding: '16px',
+                backgroundColor: '#f0f0f0',
+                borderTop: '1px solid #eee',
+                textAlign: 'center',
+                fontSize: '14px',
+                color: '#666',
+              }}
+            >
+              <strong>{selectedProizvodForImages.ime}</strong> - {selectedProizvodForImages.boja}
+              {selectedProizvodForImages.slike && selectedProizvodForImages.slike.length > 0 && (
+                <div style={{ marginTop: '8px' }}>
+                  Slika {selectedImageIndex + 1} od {selectedProizvodForImages.slike.length}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

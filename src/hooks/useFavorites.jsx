@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const FAVORITES_STORAGE_KEY = 'bratara_shop_favorites';
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 
 export function useFavorites() {
   const [favorites, setFavorites] = useState([]);

@@ -7,7 +7,7 @@ import { useCartContext } from '@/context/CartContext';
 import styles from './poruci.module.css';
 import { COLORS } from '@/constants';
 
-const API_BASE = 'https://butikirna.com';
+const API_BASE = 'http://127.0.0.1:5000';
 
 const VELIKI_GRADOVI = [
   'Sarajevo',
