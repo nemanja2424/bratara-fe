@@ -373,7 +373,7 @@ html[data-scroll-behavior="smooth"] {
    ============================ */
 
 ::-webkit-scrollbar {
-  width: 12px;
+  width: 4px;
   height: 12px;
 }
 

@@ -123,7 +123,7 @@ export default function Home() {
             </button>
             <button 
               className={styles.secondaryBtn}
-              onClick={() => router.push('/o-nama')}
+              onClick={() => router.push('/about')}
             >
               Saznaj više
             </button>

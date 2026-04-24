@@ -26,8 +26,8 @@ export const SIZE_PRESETS = {
 };
 
 export const PRESET_LABELS = {
-  obuca: 'Obuća (EU Standard)',
   odeca: 'Odeća (XS-5XL)',
+  obuca: 'Obuća (EU Standard)',
   bezVelicine: 'Torbe'
 };
 

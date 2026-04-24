@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { useCartContext } from '@/context/CartContext';
 import styles from './poruci.module.css';
 import { COLORS } from '@/constants';
@@ -101,6 +102,17 @@ export default function PorucPage() {
   if (cartItems.length === 0) {
     return (
       <div className={styles.page}>
+        <ToastContainer 
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
         <div className={styles.container}>
           <div className={styles.emptyCart}>
             <i className="fas fa-shopping-cart"></i>
@@ -285,6 +297,17 @@ export default function PorucPage() {
     
     return (
       <div className={styles.page}>
+        <ToastContainer 
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
         <div className={`${styles.modal} ${styles.stockProblemModal}`}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
@@ -392,6 +415,17 @@ export default function PorucPage() {
 
   return (
     <div className={styles.page}>
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>Potvrdite vašu porudžbinu</h1>

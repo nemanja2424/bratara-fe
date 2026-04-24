@@ -34,6 +34,11 @@ export default function Header({ adminPanel = false }) {
     };
   }, []);
 
+  // Zatvori mobilni meni kada se URL promeni
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
     const handleLogout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('rola');

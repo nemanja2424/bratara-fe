@@ -244,9 +244,24 @@ function ProizvodiPageContent() {
     setExpandedParents(prev =>
       prev.includes(parent)
         ? prev.filter(p => p !== parent)
-        : [...prev, parent]
+        : [parent]  // Samo jedan parent otvorenistovremeno
     );
   };
+
+  // Promeni veličine kada se promeni otvoreni parent
+  useEffect(() => {
+    const parentToCategoryMap = {
+      'Odeća': 'odeca',
+      'Obuća': 'obuca',
+      'Torbe': 'bezVelicine'
+    };
+    
+    if (expandedParents.length > 0) {
+      const newSizeCategory = parentToCategoryMap[expandedParents[0]];
+      setSizeCategory(newSizeCategory);
+      setFilterSizes([]); // Resetuj filtrirane veličine
+    }
+  }, [expandedParents]);
 
   const handleColorToggle = (boja) => {
     setCurrentPage(1);
