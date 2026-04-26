@@ -9,15 +9,6 @@ import styles from './signup.module.css';
 
 const API_BASE = 'https://butikirna.com';
 
-const VELIKI_GRADOVI = [
-  'Sarajevo',
-  'Banja Luka',
-  'Tuzla',
-  'Mostar',
-  'Zenica',
-  'Prijedor',
-];
-
 export default function SignupPage() {
   const router = useRouter();
   const { setAuth } = useUserContext();
@@ -219,14 +210,8 @@ export default function SignupPage() {
                   value={formData.grad}
                   onChange={handleInputChange}
                   placeholder="Unesite grad"
-                  list="gradovi-list"
                   required
                 />
-                <datalist id="gradovi-list">
-                  {VELIKI_GRADOVI.map((grad) => (
-                    <option key={grad} value={grad} />
-                  ))}
-                </datalist>
               </div>
               <div className={styles.formField}>
                 <label>Poštanski broj*</label>

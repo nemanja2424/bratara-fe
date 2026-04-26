@@ -251,7 +251,7 @@ function ProizvodiPageContent() {
   // Promeni veličine kada se promeni otvoreni parent
   useEffect(() => {
     const parentToCategoryMap = {
-      'Odeća': 'odeca',
+      'Odjeća': 'odeca',
       'Obuća': 'obuca',
       'Torbe': 'bezVelicine'
     };
@@ -416,7 +416,7 @@ function ProizvodiPageContent() {
               <div className={styles.sizeCategory} style={{borderBottom:'2px solid #0099cc4d', paddingBottom:'8px'}}>
                 {Object.entries({
                   obuca: 'Obuća',
-                  odeca: 'Odeća',
+                  odeca: 'Odjeća',
                   bezVelicine: 'Bez veličine'
                 }).map(([key, label]) => (
                   <button

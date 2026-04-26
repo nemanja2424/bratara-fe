@@ -151,7 +151,7 @@ export default function CartModal({ onClose }) {
         <div className={styles.modalFooter}>
           <div className={styles.priceBreakdown}>
             <div className={styles.priceRow}>
-              <span>Subtotal:</span>
+              <span>Cijena proizvoda:</span>
               <span>{originalPrice.toFixed(2)} KM</span>
             </div>
             {savings > 0 && (

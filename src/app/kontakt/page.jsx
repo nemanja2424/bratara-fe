@@ -5,7 +5,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import styles from './page.module.css';
 
-const API_BASE = 'http://127.0.0.1:5000';
+const API_BASE = 'https://butikirna.com';
 
 export default function Kontakt() {
   const [formData, setFormData] = useState({
@@ -91,7 +91,7 @@ export default function Kontakt() {
       <div className={styles.hero}>
         <div className={styles.heroContent}>
           <h1>Kontaktiraj Nas</h1>
-          <p>Imamo pitanja? Slobodno nam posalji poruku</p>
+          <p>Imamo pitanja? Pošalji nam poruku</p>
           <div className={styles.heroCtas}>
             <button 
               className={styles.primaryBtn}
@@ -122,7 +122,7 @@ export default function Kontakt() {
               <p>
                 <a href="mailto:butikirna@gmail.com">butikirna@gmail.com</a>
               </p>
-              <span className={styles.subtext}>Odgovoriće vam u roku od 24 časa</span>
+              <span className={styles.subtext}>Odgovoriće vam u roku od 24 sata</span>
             </div>
 
             <div className={styles.infoCard}>

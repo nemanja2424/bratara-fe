@@ -292,8 +292,8 @@
 .contactContainer {
   max-width: 1200px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1.2fr;
+  display: flex;
+  flex-direction: column;
   gap: 60px;
   position: relative;
   z-index: 1;

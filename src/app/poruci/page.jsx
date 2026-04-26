@@ -10,15 +10,6 @@ import { COLORS } from '@/constants';
 
 const API_BASE = 'https://butikirna.com';
 
-const VELIKI_GRADOVI = [
-  'Sarajevo',
-  'Banja Luka',
-  'Tuzla',
-  'Mostar',
-  'Zenica',
-  'Prijedor',
-];
-
 export default function PorucPage() {
   const router = useRouter();
   const { 
@@ -153,7 +144,7 @@ export default function PorucPage() {
       toast.error('⚠️ Molim unesite telefon');
       return false;
     }
-    if (!email.trim() || !email.includes('@')) {
+    if (email.trim() && !email.includes('@')) {
       toast.error('⚠️ Molim unesite važeću email adresu');
       return false;
     }
@@ -429,7 +420,7 @@ export default function PorucPage() {
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>Potvrdite vašu porudžbinu</h1>
-          <p>Unesite svoje podatke i pregledate korpu pre nego što potvrdite porudžbinu</p>
+          <p>Unesite svoje podatke i pregledajte korpu prije nego što potvrdite porudžbinu</p>
         </div>
 
         <div className={styles.content}>
@@ -461,7 +452,7 @@ export default function PorucPage() {
               </div>
 
               <div className={styles.formField}>
-                <label>Email*</label>
+                <label>Email (nije obavezno)</label>
                 <input
                   type="email"
                   name="email"
@@ -491,13 +482,7 @@ export default function PorucPage() {
                     value={formData.grad}
                     onChange={handleInputChange}
                     placeholder="Unesite grad"
-                    list="gradovi-list"
                   />
-                  <datalist id="gradovi-list">
-                    {VELIKI_GRADOVI.map((grad) => (
-                      <option key={grad} value={grad} />
-                    ))}
-                  </datalist>
                 </div>
                 <div className={styles.formField}>
                   <label>Poštanski broj*</label>
@@ -579,7 +564,7 @@ export default function PorucPage() {
             {/* Cena razrada */}
             <div className={styles.priceBreakdown}>
               <div className={styles.priceRow}>
-                <span>Subtotal:</span>
+                <span>Cijena proizvoda:</span>
                 <span>{originalPrice.toFixed(2)} KM</span>
               </div>
               {savings > 0 && (

@@ -50,7 +50,7 @@ export default function About() {
               Posebnu pažnju posvećujemo kvaliteti proizvoda, ali i iskustvu kupovine. Zato smo omogućili dostavu na području cijele Bosne i Hercegovine, kako bismo naše proizvode učinili dostupnim svima, bez obzira na lokaciju.
             </p>
 
-            <h3>Dolazak u Butik</h3>
+            <h3>Radno vrijeme</h3>
 
             <p>
               Naš butik se nalazi na adresi <strong>Džemala Bijedića 4</strong> (u redu glavne pošte) u Tuzli. Radno vrijeme je radnim danima od <strong>09:00 do 18:00</strong> sati, subotom od <strong>09:00 do 15:00</strong> sati, dok je nedjelja neradna.

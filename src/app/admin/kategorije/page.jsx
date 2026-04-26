@@ -568,7 +568,7 @@ export default function KategorijeAdmin() {
                 >
                   <option value="">Bez parenta</option>
                   <option value="Obuća">Obuća</option>
-                  <option value="Odeća">Odeća</option>
+                  <option value="Odjeća">Odjeća</option>
                   <option value="Torbe">Torbe</option>
                 </select>
               </div>

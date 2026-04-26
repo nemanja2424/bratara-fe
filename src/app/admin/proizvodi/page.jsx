@@ -1295,7 +1295,7 @@ export default function ProizvodiAdmin() {
                   <div>
                     <label style={{ fontSize: '13px', fontWeight: '700', color: '#1a1a1a', display: 'flex', alignItems: 'center', marginBottom: '10px', gap: '6px' }}>
                       <i className="fas fa-shirt" style={{ fontSize: '12px', color: '#3498db' }}></i>
-                      Veličine - Odeća
+                      Veličine - Odjeća
                     </label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '140px', overflowY: 'auto', paddingRight: '8px' }}>
                       {SIZE_PRESETS.odeca.map(size => (

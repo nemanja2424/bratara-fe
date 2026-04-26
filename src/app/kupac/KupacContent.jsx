@@ -815,7 +815,7 @@ export default function KupacContent() {
                 <div className={styles.cartSummary}>
                   <div className={styles.priceBreakdown}>
                     <div className={styles.priceRow}>
-                      <span>Subtotal:</span>
+                      <span>Cijena proizvoda:</span>
                       <span>{getOriginalPrice().toFixed(2)} KM</span>
                     </div>
                     {getSavings() > 0 && (
