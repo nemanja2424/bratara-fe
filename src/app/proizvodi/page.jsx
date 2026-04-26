@@ -308,7 +308,7 @@ function ProizvodiPageContent() {
       <div className={styles.hero} data-animate>
         <div className={styles.heroContent}>
           <h1>Svi Proizvodi</h1>
-          <p>Pronađite savršenu stilaciju iz naše komplentne kolekcije</p>
+          <p>Pronađite savršenu stilaciju iz naše kompletne kolekcije</p>
         </div>
       </div>
 
