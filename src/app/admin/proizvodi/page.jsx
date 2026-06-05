@@ -910,9 +910,9 @@ export default function ProizvodiAdmin() {
       detectedPreset = 'bezVelicine';
     } else if (/^\d+$/.test(selectedProizvod.velicina)) {
       const sizeNum = parseInt(selectedProizvod.velicina);
-      // 32-52 su pantalone, 36-52 su obuća
+      // 32-52 su pantalone/odjeća, 36-52 su obuća
       if (sizeNum >= 32 && sizeNum <= 52) {
-        detectedPreset = SIZE_PRESETS.pantalone.includes(selectedProizvod.velicina) ? 'pantalone' : 'obuca';
+        detectedPreset = SIZE_PRESETS.odeca.includes(selectedProizvod.velicina) ? 'odeca' : 'obuca';
       } else {
         detectedPreset = 'obuca';
       }
