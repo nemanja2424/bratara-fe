@@ -1,20 +1,20 @@
 // Hardkodovane boje sa hex kodovima
 export const COLORS = {
   'Crna': '#000000',
-  'Bela': '#ffffff',
+  'Bijela': '#ffffff',
   'Crvena': '#ff0000',
   'Plava': '#0000ff',
+  'Teget': '#05053f',
+  'Zelena': '#008000',
+  'Narandžasta': '#ffa500',
   'Roza': '#ffc0cb',
   'Ljubičasta': '#800080',
   'Siva': '#808080',
-  'Svetlosiva': '#d3d3d3',
   'Bež': '#f5f5dc',
-  'Karamel': '#d4a574',
-  'Braon': '#8b4513',
-  'Tamno Braon': '#654321',
-  'Smeđa': '#a0826d',
+  'Tamno bež': '#d4a574',
+  'Kamel': '#8b4513',
+  'Smeđa': '#654321',
   'Bordo': '#800020',
-  'Vino': '#722f37',
   'Tirkizna': '#40e0d0',
 };
 

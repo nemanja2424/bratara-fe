@@ -44,7 +44,7 @@ export default function ProizvodiAdmin() {
   });
 
   // Step 2: Boje i varijante
-  // colorVariants = { 'Crna': {slike: [], selectedSizes: []}, 'Bela': {...} }
+  // colorVariants = { 'Crna': {slike: [], selectedSizes: []}, 'Bijela': {...} }
   const [colorVariants, setColorVariants] = useState({});
   const [currentColorForm, setCurrentColorForm] = useState({
     boja: '',
