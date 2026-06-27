@@ -4,6 +4,7 @@ export const COLORS = {
   'Bijela': '#ffffff',
   'Crvena': '#ff0000',
   'Plava': '#0000ff',
+  'Svetlo plava': '#26afd1',
   'Teget': '#05053f',
   'Zelena': '#008000',
   'Narandžasta': '#ffa500',
