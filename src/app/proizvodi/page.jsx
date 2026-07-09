@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -505,10 +506,11 @@ function ProizvodiPageContent() {
             ) : proizvodi.length > 0 ? (
               <>
                 <div className={styles.productsGrid}>
-                  {proizvodi.map((proizvod) => (
+                  {proizvodi.map((proizvod, index) => (
                     <ProductCard 
                       key={proizvod.code_base} 
                       proizvod={proizvod}
+                      imagePriority={index < 4}
                       onClick={() => router.push(`/proizvodi/${proizvod.code_base}`)}
                     />
                   ))}
@@ -595,11 +597,12 @@ export default function ProizvodiPage() {
   );
 }
 
-function ProductCard({ proizvod, onClick }) {
+function ProductCard({ proizvod, imagePriority = false, onClick }) {
   const cart = useCartContext();
   const { favorites, toggleFavorite } = useFavoritesContext();
   const isFavorited = favorites.includes(proizvod.code_base);
   const buttonRef = useRef(null);
+  const [imageError, setImageError] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedSize, setSelectedSize] = useState(null);
@@ -720,6 +723,9 @@ function ProductCard({ proizvod, onClick }) {
   const discountedPrice = proizvod.popust > 0 
     ? parseFloat(proizvod.cena) - (parseFloat(proizvod.cena) * proizvod.popust / 100)
     : parseFloat(proizvod.cena);
+  const productImageSrc = proizvod.slike?.[0]
+    ? `${API_BASE}/api/proizvodi/slike/${proizvod.slike[0]}`
+    : null;
 
   return (
     <div className={styles.productCard} onClick={onClick} data-animate>
@@ -731,11 +737,14 @@ function ProductCard({ proizvod, onClick }) {
         >
           <i className={`${isFavorited ? 'fas' : 'far'} fa-heart`}></i>
         </button>
-        {proizvod.slike && proizvod.slike.length > 0 ? (
-          <img 
-            src={`${API_BASE}/api/proizvodi/slike/${proizvod.slike[0]}`}
+        {productImageSrc && !imageError ? (
+          <Image
+            src={productImageSrc}
             alt={proizvod.ime}
-            onError={(e) => e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="200"%3E%3Crect fill="%23f0f0f0" width="200" height="200"/%3E%3C/svg%3E'}
+            fill
+            sizes="(max-width: 480px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, (max-width: 1400px) 22vw, 260px"
+            fetchPriority={imagePriority ? 'high' : 'auto'}
+            onError={() => setImageError(true)}
           />
         ) : (
           <div className={styles.noImage}>

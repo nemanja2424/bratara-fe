@@ -618,6 +618,8 @@
   position: relative;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  content-visibility: auto;
+  contain-intrinsic-size: 380px;
 }
 
 .productCard[data-animate] {
