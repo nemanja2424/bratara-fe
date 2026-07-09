@@ -17,6 +17,8 @@ export const COLORS = {
   'Smeđa': '#654321',
   'Bordo': '#800020',
   'Tirkizna': '#40e0d0',
+  'Žuta': '#fffb00',
+  'Tamno zelena': '#15921b',
 };
 
 // Presetovi za veličine
