@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -9,6 +10,7 @@ import { COLORS, SIZE_PRESETS, PRESET_LABELS } from '@/constants';
 
 const API_BASE = 'https://butikirna.com';
 const ITEMS_PER_PAGE = 10;
+const getProductImageSrc = (imageName) => `${API_BASE}/api/proizvodi/slike/${imageName}`;
 
 export default function ProizvodiAdmin() {
   const router = useRouter();
@@ -91,6 +93,7 @@ export default function ProizvodiAdmin() {
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedProizvodForImages, setSelectedProizvodForImages] = useState(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [imageModalError, setImageModalError] = useState(false);
   const [imageThumbScrollPos, setImageThumbScrollPos] = useState(0);
 
   useEffect(() => {
@@ -1490,6 +1493,7 @@ export default function ProizvodiAdmin() {
                           onClick={() => {
                             setSelectedProizvodForImages(proizvod);
                             setSelectedImageIndex(0);
+                            setImageModalError(false);
                             setImageThumbScrollPos(0);
                             setShowImageModal(true);
                           }}
@@ -1505,9 +1509,12 @@ export default function ProizvodiAdmin() {
                             justifyContent: 'center'
                           }}
                         >
-                          <img
-                            src={`${API_BASE}/api/proizvodi/slike/${proizvod.slike[0]}`}
+                          <Image
+                            src={getProductImageSrc(proizvod.slike[0])}
                             alt="Thumbnail"
+                            width={60}
+                            height={60}
+                            sizes="60px"
                             style={{
                               maxWidth: '100%',
                               maxHeight: '60px',
@@ -1798,9 +1805,12 @@ export default function ProizvodiAdmin() {
                             <div key={idx} className={styles.imageItem}>
                               {typeof slika === 'string' ? (
                                 // Slika iz backenda - samo filename
-                                <img 
-                                  src={`${API_BASE}/api/proizvodi/slike/${slika}`} 
-                                  alt={slika} 
+                                <Image
+                                  src={getProductImageSrc(slika)}
+                                  alt={slika}
+                                  width={80}
+                                  height={80}
+                                  sizes="80px"
                                   className={styles.imagePreview}
                                   onError={(e) => e.target.style.display = 'none'}
                                 />
@@ -2709,30 +2719,29 @@ export default function ProizvodiAdmin() {
                 flex: 1,
               }}
             >
-              {selectedProizvodForImages.slike && selectedProizvodForImages.slike.length > 0 ? (
+              {selectedProizvodForImages.slike && selectedProizvodForImages.slike.length > 0 && !imageModalError ? (
                 <>
-                  <img
-                    src={`${API_BASE}/api/proizvodi/slike/${selectedProizvodForImages.slike[selectedImageIndex]}`}
+                  <Image
+                    src={getProductImageSrc(selectedProizvodForImages.slike[selectedImageIndex])}
                     alt={`Slika ${selectedImageIndex + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 95vw, 900px"
                     style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
                       objectFit: 'contain',
                     }}
-                    onError={(e) => {
-                      e.target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="400" height="400"%3E%3Crect fill="%23f0f0f0" width="400" height="400"/%3E%3Ctext x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="16" fill="%23999"%3ENema slike%3C/text%3E%3C/svg%3E';
-                    }}
+                    onError={() => setImageModalError(true)}
                   />
 
                   {/* Navigation Arrows */}
                   {selectedProizvodForImages.slike.length > 1 && (
                     <>
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          setImageModalError(false);
                           setSelectedImageIndex((prev) =>
                             prev === 0 ? selectedProizvodForImages.slike.length - 1 : prev - 1
-                          )
-                        }
+                          );
+                        }}
                         style={{
                           position: 'absolute',
                           left: '16px',
@@ -2755,11 +2764,12 @@ export default function ProizvodiAdmin() {
                         <i className="fas fa-chevron-left"></i>
                       </button>
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          setImageModalError(false);
                           setSelectedImageIndex((prev) =>
                             prev === selectedProizvodForImages.slike.length - 1 ? 0 : prev + 1
-                          )
-                        }
+                          );
+                        }}
                         style={{
                           position: 'absolute',
                           right: '16px',
@@ -2832,7 +2842,10 @@ export default function ProizvodiAdmin() {
                   {selectedProizvodForImages.slike.map((slika, index) => (
                     <button
                       key={index}
-                      onClick={() => setSelectedImageIndex(index)}
+                      onClick={() => {
+                        setImageModalError(false);
+                        setSelectedImageIndex(index);
+                      }}
                       style={{
                         border: selectedImageIndex === index ? '3px solid #007bff' : '2px solid #ddd',
                         borderRadius: '6px',
@@ -2845,9 +2858,12 @@ export default function ProizvodiAdmin() {
                         overflow: 'hidden',
                       }}
                     >
-                      <img
-                        src={`${API_BASE}/api/proizvodi/slike/${slika}`}
+                      <Image
+                        src={getProductImageSrc(slika)}
                         alt={`Thumbnail ${index + 1}`}
+                        width={60}
+                        height={60}
+                        sizes="60px"
                         style={{
                           width: '100%',
                           height: '100%',
