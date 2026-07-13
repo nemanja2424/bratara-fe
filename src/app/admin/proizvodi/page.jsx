@@ -11,7 +11,41 @@ import { COLORS, SIZE_PRESETS, PRESET_LABELS } from '@/constants';
 const API_BASE = 'https://butikirna.com';
 const ITEMS_PER_PAGE = 10;
 const MAX_RECOMMENDED_PRODUCTS = 12;
-const getProductImageSrc = (imageName) => `${API_BASE}/api/proizvodi/slike/${imageName}`;
+const getProductImageSrc = (imageName) => {
+  const normalizedImageName = String(imageName || '').trim();
+  if (!normalizedImageName) return '';
+  if (/^(https?:|data:|blob:)/.test(normalizedImageName)) return normalizedImageName;
+
+  return `${API_BASE}/api/proizvodi/slike/${encodeURIComponent(normalizedImageName)}`;
+};
+
+const getProductImages = (proizvod) => {
+  const slike = proizvod?.slike;
+
+  if (Array.isArray(slike)) {
+    return slike
+      .map((slika) => typeof slika === 'string' ? slika.trim() : slika?.name)
+      .filter(Boolean);
+  }
+
+  if (typeof slike !== 'string') return [];
+
+  const trimmed = slike.trim();
+  if (!trimmed) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((slika) => typeof slika === 'string' ? slika.trim() : slika?.name)
+        .filter(Boolean);
+    }
+  } catch {
+    // Some older rows may contain a single filename instead of a JSON array.
+  }
+
+  return [trimmed];
+};
 
 const getRecommendationSortValue = (item) => {
   const redosled = Number(item?.redosled);
@@ -1075,7 +1109,20 @@ export default function ProizvodiAdmin() {
     setCurrentPage(1); // Resetuj na prvu stranicu kada se menja sortiranje
   };
 
+  const openImageModal = (proizvod) => {
+    const slike = getProductImages(proizvod);
+    if (slike.length === 0) return;
+
+    setSelectedProizvodForImages({ ...proizvod, slike });
+    setSelectedImageIndex(0);
+    setImageModalError(false);
+    setImageThumbScrollPos(0);
+    setShowImageModal(true);
+  };
+
   if (!isMounted) return null;
+
+  const selectedModalImages = getProductImages(selectedProizvodForImages);
 
   return (
     <div className={styles.container}>
@@ -1561,15 +1608,9 @@ export default function ProizvodiAdmin() {
                       {proizvod.kategorija}
                     </td>
                     <td style={{ textAlign: 'center', padding: '2px', minWidth: '80px' }}>
-                      {proizvod.slike && proizvod.slike.length > 0 ? (
+                      {getProductImages(proizvod).length > 0 ? (
                         <button
-                          onClick={() => {
-                            setSelectedProizvodForImages(proizvod);
-                            setSelectedImageIndex(0);
-                            setImageModalError(false);
-                            setImageThumbScrollPos(0);
-                            setShowImageModal(true);
-                          }}
+                          onClick={() => openImageModal(proizvod)}
                           style={{
                             border: 'none',
                             background: 'none',
@@ -1582,8 +1623,8 @@ export default function ProizvodiAdmin() {
                             justifyContent: 'center'
                           }}
                         >
-                          <Image
-                            src={getProductImageSrc(proizvod.slike[0])}
+                          <img
+                            src={getProductImageSrc(getProductImages(proizvod)[0])}
                             alt="Thumbnail"
                             width={60}
                             height={60}
@@ -1594,7 +1635,7 @@ export default function ProizvodiAdmin() {
                               objectFit: 'contain'
                             }}
                             onError={(e) => {
-                              e.target.style.display = 'none';
+                              e.currentTarget.style.display = 'none';
                             }}
                           />
                         </button>
@@ -2798,27 +2839,29 @@ export default function ProizvodiAdmin() {
                 flex: 1,
               }}
             >
-              {selectedProizvodForImages.slike && selectedProizvodForImages.slike.length > 0 && !imageModalError ? (
+              {selectedModalImages.length > 0 && !imageModalError ? (
                 <>
-                  <Image
-                    src={getProductImageSrc(selectedProizvodForImages.slike[selectedImageIndex])}
+                  <img
+                    src={getProductImageSrc(selectedModalImages[selectedImageIndex])}
                     alt={`Slika ${selectedImageIndex + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 95vw, 900px"
                     style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      width: 'auto',
+                      height: 'auto',
                       objectFit: 'contain',
                     }}
                     onError={() => setImageModalError(true)}
                   />
 
                   {/* Navigation Arrows */}
-                  {selectedProizvodForImages.slike.length > 1 && (
+                  {selectedModalImages.length > 1 && (
                     <>
                       <button
                         onClick={() => {
                           setImageModalError(false);
                           setSelectedImageIndex((prev) =>
-                            prev === 0 ? selectedProizvodForImages.slike.length - 1 : prev - 1
+                            prev === 0 ? selectedModalImages.length - 1 : prev - 1
                           );
                         }}
                         style={{
@@ -2846,7 +2889,7 @@ export default function ProizvodiAdmin() {
                         onClick={() => {
                           setImageModalError(false);
                           setSelectedImageIndex((prev) =>
-                            prev === selectedProizvodForImages.slike.length - 1 ? 0 : prev + 1
+                            prev === selectedModalImages.length - 1 ? 0 : prev + 1
                           );
                         }}
                         style={{
@@ -2882,7 +2925,7 @@ export default function ProizvodiAdmin() {
             </div>
 
             {/* Thumbnails Carousel */}
-            {selectedProizvodForImages.slike && selectedProizvodForImages.slike.length > 1 && (
+            {selectedModalImages.length > 1 && (
               <div
                 style={{
                   padding: '16px',
@@ -2918,7 +2961,7 @@ export default function ProizvodiAdmin() {
                     maxWidth: '400px',
                   }}
                 >
-                  {selectedProizvodForImages.slike.map((slika, index) => (
+                  {selectedModalImages.map((slika, index) => (
                     <button
                       key={index}
                       onClick={() => {
@@ -2937,7 +2980,7 @@ export default function ProizvodiAdmin() {
                         overflow: 'hidden',
                       }}
                     >
-                      <Image
+                      <img
                         src={getProductImageSrc(slika)}
                         alt={`Thumbnail ${index + 1}`}
                         width={60}
@@ -2950,7 +2993,7 @@ export default function ProizvodiAdmin() {
                           display: 'block',
                         }}
                         onError={(e) => {
-                          e.target.style.display = 'none';
+                          e.currentTarget.style.display = 'none';
                         }}
                       />
                     </button>
@@ -2985,9 +3028,9 @@ export default function ProizvodiAdmin() {
               }}
             >
               <strong>{selectedProizvodForImages.ime}</strong> - {selectedProizvodForImages.boja}
-              {selectedProizvodForImages.slike && selectedProizvodForImages.slike.length > 0 && (
+              {selectedModalImages.length > 0 && (
                 <div style={{ marginTop: '8px' }}>
-                  Slika {selectedImageIndex + 1} od {selectedProizvodForImages.slike.length}
+                  Slika {selectedImageIndex + 1} od {selectedModalImages.length}
                 </div>
               )}
             </div>
