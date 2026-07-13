@@ -18,30 +18,28 @@ const getRecommendationSortValue = (item) => {
   return Number.isFinite(redosled) ? redosled : Number.MAX_SAFE_INTEGER;
 };
 
-const applySequentialRecommendedOrder = (items = []) => {
+const getSortedUniqueRecommendedProducts = (items = []) => {
   const seenCodeBases = new Set();
 
-  return items
-    .filter((item) => {
-      if (!item?.code_base || seenCodeBases.has(item.code_base)) return false;
-      seenCodeBases.add(item.code_base);
-      return true;
-    })
-    .map((item, index) => ({
-      ...item,
-      redosled: index + 1,
-    }));
-};
-
-const normalizeRecommendedProducts = (items = []) => {
-  return applySequentialRecommendedOrder(
-    [...items].sort((a, b) => {
+  return [...items]
+    .sort((a, b) => {
       const orderDiff = getRecommendationSortValue(a) - getRecommendationSortValue(b);
       if (orderDiff !== 0) return orderDiff;
 
       return String(a.code_base || '').localeCompare(String(b.code_base || ''));
     })
-  );
+    .filter((item) => {
+      if (!item?.code_base || seenCodeBases.has(item.code_base)) return false;
+      seenCodeBases.add(item.code_base);
+      return true;
+    });
+};
+
+const normalizeRecommendedProducts = (items = []) => {
+  return getSortedUniqueRecommendedProducts(items).map((item, index) => ({
+    ...item,
+    redosled: index + 1,
+  }));
 };
 
 export default function ProizvodiAdmin() {
@@ -156,11 +154,34 @@ export default function ProizvodiAdmin() {
     fetchKategorije();
   }, []);
 
-  const persistRecommendedOrder = async (items, token = localStorage.getItem('access_token')) => {
-    const orderedItems = applySequentialRecommendedOrder(items);
-    if (!token || orderedItems.length === 0) return orderedItems;
+  const fetchRecommendedItems = async () => {
+    const response = await fetch(`${API_BASE}/api/preporuceno/get`);
+    if (!response.ok) throw new Error('Greška pri učitavanju preporučenih proizvoda');
+    const data = await response.json();
+    return data.preporuceni || [];
+  };
 
-    for (const item of orderedItems) {
+  const persistRecommendedOrder = async (items, token = localStorage.getItem('access_token')) => {
+    const sortedItems = getSortedUniqueRecommendedProducts(items);
+    const orderedItems = sortedItems.map((item, index) => ({
+      ...item,
+      redosled: index + 1,
+    }));
+
+    if (orderedItems.length === 0) return orderedItems;
+
+    const orderUpdates = sortedItems
+      .map((item, index) => ({
+        code_base: item.code_base,
+        redosled: index + 1,
+        currentRedosled: Number(item.redosled),
+      }))
+      .filter((item) => item.currentRedosled !== item.redosled);
+
+    if (orderUpdates.length === 0) return orderedItems;
+    if (!token) throw new Error('Niste autentifikovani za ažuriranje redosleda');
+
+    for (const item of orderUpdates) {
       const response = await fetch(`${API_BASE}/api/preporuceno/patch`, {
         method: 'PATCH',
         headers: {
@@ -185,10 +206,8 @@ export default function ProizvodiAdmin() {
   const fetchPreporuceni = async ({ repairOrder = false } = {}) => {
     try {
       setRecommendedLoading(true);
-      const response = await fetch(`${API_BASE}/api/preporuceno/get`);
-      if (!response.ok) throw new Error('Greška pri učitavanju preporučenih proizvoda');
-      const data = await response.json();
-      const normalizedPreporuceni = normalizeRecommendedProducts(data.preporuceni || []);
+      const rawPreporuceni = await fetchRecommendedItems();
+      const normalizedPreporuceni = normalizeRecommendedProducts(rawPreporuceni);
 
       if (!repairOrder) {
         setPreporuceni(normalizedPreporuceni);
@@ -196,9 +215,10 @@ export default function ProizvodiAdmin() {
       }
 
       try {
-        const repairedPreporuceni = await persistRecommendedOrder(normalizedPreporuceni);
-        setPreporuceni(repairedPreporuceni);
-        return repairedPreporuceni;
+        await persistRecommendedOrder(rawPreporuceni);
+        const savedPreporuceni = normalizeRecommendedProducts(await fetchRecommendedItems());
+        setPreporuceni(savedPreporuceni);
+        return savedPreporuceni;
       } catch (repairErr) {
         console.error('Greška pri ažuriranju redosleda preporučenih proizvoda:', repairErr);
         toast.error('⚠️ Redosled je prikazan ispravno, ali nije sačuvan u bazi');
@@ -256,7 +276,12 @@ export default function ProizvodiAdmin() {
 
     try {
       const token = localStorage.getItem('access_token');
-      await persistRecommendedOrder(preporuceni, token);
+      const repairedPreporuceni = await fetchPreporuceni({ repairOrder: true });
+
+      if (repairedPreporuceni.length >= MAX_RECOMMENDED_PRODUCTS) {
+        toast.error('⚠️ Maksimalno 12 preporučenih proizvoda!');
+        return;
+      }
 
       const response = await fetch(`${API_BASE}/api/preporuceno/post`, {
         method: 'POST',
@@ -310,7 +335,7 @@ export default function ProizvodiAdmin() {
     if (currentRedosled <= 1) return;
     try {
       const token = localStorage.getItem('access_token');
-      await persistRecommendedOrder(preporuceni, token);
+      await fetchPreporuceni({ repairOrder: true });
 
       const response = await fetch(`${API_BASE}/api/preporuceno/patch`, {
         method: 'PATCH',
@@ -338,7 +363,7 @@ export default function ProizvodiAdmin() {
     if (currentRedosled >= totalCount) return;
     try {
       const token = localStorage.getItem('access_token');
-      await persistRecommendedOrder(preporuceni, token);
+      await fetchPreporuceni({ repairOrder: true });
 
       const response = await fetch(`${API_BASE}/api/preporuceno/patch`, {
         method: 'PATCH',
