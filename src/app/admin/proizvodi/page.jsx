@@ -10,7 +10,39 @@ import { COLORS, SIZE_PRESETS, PRESET_LABELS } from '@/constants';
 
 const API_BASE = 'https://butikirna.com';
 const ITEMS_PER_PAGE = 10;
+const MAX_RECOMMENDED_PRODUCTS = 12;
 const getProductImageSrc = (imageName) => `${API_BASE}/api/proizvodi/slike/${imageName}`;
+
+const getRecommendationSortValue = (item) => {
+  const redosled = Number(item?.redosled);
+  return Number.isFinite(redosled) ? redosled : Number.MAX_SAFE_INTEGER;
+};
+
+const applySequentialRecommendedOrder = (items = []) => {
+  const seenCodeBases = new Set();
+
+  return items
+    .filter((item) => {
+      if (!item?.code_base || seenCodeBases.has(item.code_base)) return false;
+      seenCodeBases.add(item.code_base);
+      return true;
+    })
+    .map((item, index) => ({
+      ...item,
+      redosled: index + 1,
+    }));
+};
+
+const normalizeRecommendedProducts = (items = []) => {
+  return applySequentialRecommendedOrder(
+    [...items].sort((a, b) => {
+      const orderDiff = getRecommendationSortValue(a) - getRecommendationSortValue(b);
+      if (orderDiff !== 0) return orderDiff;
+
+      return String(a.code_base || '').localeCompare(String(b.code_base || ''));
+    })
+  );
+};
 
 export default function ProizvodiAdmin() {
   const router = useRouter();
@@ -124,24 +156,66 @@ export default function ProizvodiAdmin() {
     fetchKategorije();
   }, []);
 
+  const persistRecommendedOrder = async (items, token = localStorage.getItem('access_token')) => {
+    const orderedItems = applySequentialRecommendedOrder(items);
+    if (!token || orderedItems.length === 0) return orderedItems;
+
+    for (const item of orderedItems) {
+      const response = await fetch(`${API_BASE}/api/preporuceno/patch`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          code_base: item.code_base,
+          redosled: item.redosled,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Greška pri ažuriranju redosleda preporučenih proizvoda');
+      }
+    }
+
+    return orderedItems;
+  };
+
   // Fetch recommended products
-  const fetchPreporuceni = async () => {
+  const fetchPreporuceni = async ({ repairOrder = false } = {}) => {
     try {
       setRecommendedLoading(true);
       const response = await fetch(`${API_BASE}/api/preporuceno/get`);
       if (!response.ok) throw new Error('Greška pri učitavanju preporučenih proizvoda');
       const data = await response.json();
-      setPreporuceni(data.preporuceni || []);
+      const normalizedPreporuceni = normalizeRecommendedProducts(data.preporuceni || []);
+
+      if (!repairOrder) {
+        setPreporuceni(normalizedPreporuceni);
+        return normalizedPreporuceni;
+      }
+
+      try {
+        const repairedPreporuceni = await persistRecommendedOrder(normalizedPreporuceni);
+        setPreporuceni(repairedPreporuceni);
+        return repairedPreporuceni;
+      } catch (repairErr) {
+        console.error('Greška pri ažuriranju redosleda preporučenih proizvoda:', repairErr);
+        toast.error('⚠️ Redosled je prikazan ispravno, ali nije sačuvan u bazi');
+        setPreporuceni(normalizedPreporuceni);
+        return normalizedPreporuceni;
+      }
     } catch (err) {
       console.error('Greška pri učitavanju preporučenih proizvoda:', err);
       toast.error('⚠️ Greška pri učitavanju preporučenih proizvoda');
+      return [];
     } finally {
       setRecommendedLoading(false);
     }
   };
 
   // Fetch available products for adding to recommended
-  const fetchAvailableProducts = async () => {
+  const fetchAvailableProducts = async (recommendedItems = preporuceni) => {
     try {
       const token = localStorage.getItem('access_token');
       const params = new URLSearchParams();
@@ -163,8 +237,8 @@ export default function ProizvodiAdmin() {
       const data = await response.json();
       
       // Filter out products that are already recommended
-      const recommendedCodes = preporuceni.map(p => p.code_base);
-      const filtered = (data.proizvodi || []).filter(p => !recommendedCodes.includes(p.code_base));
+      const recommendedCodes = new Set(recommendedItems.map(p => p.code_base));
+      const filtered = (data.proizvodi || []).filter(p => !recommendedCodes.has(p.code_base));
       setAvailableProducts(filtered);
     } catch (err) {
       console.error('Greška pri učitavanju dostupnih proizvoda:', err);
@@ -175,13 +249,15 @@ export default function ProizvodiAdmin() {
   // Add product to recommended
   const handleAddRecommended = async (codeBase) => {
     // Validate max 12
-    if (preporuceni.length >= 12) {
+    if (preporuceni.length >= MAX_RECOMMENDED_PRODUCTS) {
       toast.error('⚠️ Maksimalno 12 preporučenih proizvoda!');
       return;
     }
 
     try {
       const token = localStorage.getItem('access_token');
+      await persistRecommendedOrder(preporuceni, token);
+
       const response = await fetch(`${API_BASE}/api/preporuceno/post`, {
         method: 'POST',
         headers: {
@@ -197,8 +273,8 @@ export default function ProizvodiAdmin() {
       }
       
       toast.success('✅ Proizvod je dodan u preporučene');
-      await fetchPreporuceni();
-      await fetchAvailableProducts();
+      const updatedPreporuceni = await fetchPreporuceni({ repairOrder: true });
+      await fetchAvailableProducts(updatedPreporuceni);
     } catch (err) {
       console.error('Greška:', err);
       toast.error(`⚠️ ${err.message}`);
@@ -221,40 +297,8 @@ export default function ProizvodiAdmin() {
       if (!response.ok) throw new Error('Greška pri brisanju proizvoda');
       
       toast.success('✅ Proizvod je obrisan iz preporučenih');
-      
-      // Fetch all remaining products and sort them by current redosled
-      const currentPreporuceni = await (await fetch(`${API_BASE}/api/preporuceno/get`)).json();
-      let items = currentPreporuceni.preporuceni || [];
-      
-      // Sort by redosled first to ensure proper order
-      items = items.sort((a, b) => a.redosled - b.redosled);
-      
-      // Reorder all items SEQUENTIALLY to have sequential redoslede (1, 2, 3, ...)
-      for (let index = 0; index < items.length; index++) {
-        const item = items[index];
-        const newRedosled = index + 1;
-        
-        if (item.redosled !== newRedosled) {
-          const patchResponse = await fetch(`${API_BASE}/api/preporuceno/patch`, {
-            method: 'PATCH',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              code_base: item.code_base,
-              redosled: newRedosled,
-            }),
-          });
-          
-          if (!patchResponse.ok) {
-            console.error(`Greška pri ažuriranju redosleda za ${item.code_base}`);
-          }
-        }
-      }
-      
-      await fetchPreporuceni();
-      await fetchAvailableProducts();
+      const updatedPreporuceni = await fetchPreporuceni({ repairOrder: true });
+      await fetchAvailableProducts(updatedPreporuceni);
     } catch (err) {
       console.error('Greška:', err);
       toast.error('⚠️ Greška pri brisanju proizvoda');
@@ -266,6 +310,8 @@ export default function ProizvodiAdmin() {
     if (currentRedosled <= 1) return;
     try {
       const token = localStorage.getItem('access_token');
+      await persistRecommendedOrder(preporuceni, token);
+
       const response = await fetch(`${API_BASE}/api/preporuceno/patch`, {
         method: 'PATCH',
         headers: {
@@ -280,7 +326,7 @@ export default function ProizvodiAdmin() {
       
       if (!response.ok) throw new Error('Greška pri premještanju proizvoda');
       
-      await fetchPreporuceni();
+      await fetchPreporuceni({ repairOrder: true });
     } catch (err) {
       console.error('Greška:', err);
       toast.error('⚠️ Greška pri premještanju proizvoda');
@@ -292,6 +338,8 @@ export default function ProizvodiAdmin() {
     if (currentRedosled >= totalCount) return;
     try {
       const token = localStorage.getItem('access_token');
+      await persistRecommendedOrder(preporuceni, token);
+
       const response = await fetch(`${API_BASE}/api/preporuceno/patch`, {
         method: 'PATCH',
         headers: {
@@ -306,7 +354,7 @@ export default function ProizvodiAdmin() {
       
       if (!response.ok) throw new Error('Greška pri premještanju proizvoda');
       
-      await fetchPreporuceni();
+      await fetchPreporuceni({ repairOrder: true });
     } catch (err) {
       console.error('Greška:', err);
       toast.error('⚠️ Greška pri premještanju proizvoda');
@@ -317,7 +365,7 @@ export default function ProizvodiAdmin() {
   const handleOpenRecommendedModal = async () => {
     setShowRecommendedModal(true);
     setSearchRecommendedInput('');
-    await fetchPreporuceni();
+    await fetchPreporuceni({ repairOrder: true });
     // Fetch available products will be called when preporuceni updates
   };
 
@@ -393,7 +441,7 @@ export default function ProizvodiAdmin() {
 
   // Fetch available products when preporuceni changes or search input changes
   useEffect(() => {
-    if (showRecommendedModal && preporuceni.length >= 0) {
+    if (showRecommendedModal) {
       fetchAvailableProducts();
     }
   }, [showRecommendedModal, preporuceni, searchRecommendedInput]);
@@ -2435,14 +2483,14 @@ export default function ProizvodiAdmin() {
                       borderRadius: '20px',
                       fontSize: '0.9rem',
                       fontWeight: 'bold',
-                      backgroundColor: preporuceni.length >= 12 ? '#dc3545' : '#0099cc',
+                      backgroundColor: preporuceni.length >= MAX_RECOMMENDED_PRODUCTS ? '#dc3545' : '#0099cc',
                       color: 'white',
                     }}>
-                      {preporuceni.length}/12
+                      {preporuceni.length}/{MAX_RECOMMENDED_PRODUCTS}
                     </span>
                   </div>
                   
-                  {preporuceni.length >= 12 && (
+                  {preporuceni.length >= MAX_RECOMMENDED_PRODUCTS && (
                     <div style={{
                       padding: '12px',
                       marginBottom: '12px',
@@ -2463,9 +2511,14 @@ export default function ProizvodiAdmin() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '500px', overflowY: 'auto' }}>
-                      {preporuceni.map((item, index) => (
+                      {preporuceni.map((item, index) => {
+                        const displayRedosled = index + 1;
+                        const isFirstRecommended = displayRedosled === 1;
+                        const isLastRecommended = displayRedosled === preporuceni.length;
+
+                        return (
                         <div
-                          key={item.id}
+                          key={item.code_base}
                           style={{
                             display: 'flex',
                             justifyContent: 'space-between',
@@ -2478,7 +2531,7 @@ export default function ProizvodiAdmin() {
                         >
                           <div style={{ flex: 1 }}>
                             <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '4px' }}>
-                              {item.redosled}. {item.ime}
+                              {displayRedosled}. {item.ime}
                             </div>
                             <div style={{ fontSize: '0.85rem', color: '#666' }}>
                               {item.code_base}
@@ -2486,29 +2539,29 @@ export default function ProizvodiAdmin() {
                           </div>
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <button
-                              onClick={() => handleMoveUp(item.redosled)}
-                              disabled={item.redosled <= 1}
+                              onClick={() => handleMoveUp(displayRedosled)}
+                              disabled={isFirstRecommended}
                               style={{
                                 padding: '8px 12px',
-                                background: item.redosled <= 1 ? '#ccc' : '#0099cc',
+                                background: isFirstRecommended ? '#ccc' : '#0099cc',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
-                                cursor: item.redosled <= 1 ? 'not-allowed' : 'pointer',
+                                cursor: isFirstRecommended ? 'not-allowed' : 'pointer',
                               }}
                             >
                               <i className="fas fa-arrow-up"></i>
                             </button>
                             <button
-                              onClick={() => handleMoveDown(item.redosled, preporuceni.length)}
-                              disabled={item.redosled >= preporuceni.length}
+                              onClick={() => handleMoveDown(displayRedosled, preporuceni.length)}
+                              disabled={isLastRecommended}
                               style={{
                                 padding: '8px 12px',
-                                background: item.redosled >= preporuceni.length ? '#ccc' : '#0099cc',
+                                background: isLastRecommended ? '#ccc' : '#0099cc',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
-                                cursor: item.redosled >= preporuceni.length ? 'not-allowed' : 'pointer',
+                                cursor: isLastRecommended ? 'not-allowed' : 'pointer',
                               }}
                             >
                               <i className="fas fa-arrow-down"></i>
@@ -2528,7 +2581,8 @@ export default function ProizvodiAdmin() {
                             </button>
                           </div>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -2538,13 +2592,13 @@ export default function ProizvodiAdmin() {
                   border: '2px solid rgba(100, 200, 100, 0.2)',
                   borderRadius: '8px',
                   padding: '16px',
-                  backgroundColor: preporuceni.length >= 12 ? 'rgba(150, 150, 150, 0.05)' : 'rgba(100, 200, 100, 0.03)',
+                  backgroundColor: preporuceni.length >= MAX_RECOMMENDED_PRODUCTS ? 'rgba(150, 150, 150, 0.05)' : 'rgba(100, 200, 100, 0.03)',
                 }}>
                   <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>
                     Dostupni Proizvodi
                   </h3>
                   
-                  {preporuceni.length >= 12 && (
+                  {preporuceni.length >= MAX_RECOMMENDED_PRODUCTS && (
                     <div style={{
                       padding: '12px',
                       marginBottom: '12px',
@@ -2564,7 +2618,7 @@ export default function ProizvodiAdmin() {
                     placeholder="Pretraži proizvode..."
                     value={searchRecommendedInput}
                     onChange={(e) => setSearchRecommendedInput(e.target.value)}
-                    disabled={preporuceni.length >= 12}
+                    disabled={preporuceni.length >= MAX_RECOMMENDED_PRODUCTS}
                     style={{
                       width: '100%',
                       padding: '10px 12px',
@@ -2573,8 +2627,8 @@ export default function ProizvodiAdmin() {
                       borderRadius: '4px',
                       fontSize: '14px',
                       boxSizing: 'border-box',
-                      opacity: preporuceni.length >= 12 ? 0.6 : 1,
-                      cursor: preporuceni.length >= 12 ? 'not-allowed' : 'text',
+                      opacity: preporuceni.length >= MAX_RECOMMENDED_PRODUCTS ? 0.6 : 1,
+                      cursor: preporuceni.length >= MAX_RECOMMENDED_PRODUCTS ? 'not-allowed' : 'text',
                     }}
                   />
                   {availableProducts.length === 0 ? (
@@ -2607,14 +2661,14 @@ export default function ProizvodiAdmin() {
                           </div>
                           <button
                             onClick={() => handleAddRecommended(item.code_base)}
-                            disabled={preporuceni.length >= 12}
+                            disabled={preporuceni.length >= MAX_RECOMMENDED_PRODUCTS}
                             style={{
                               padding: '8px 16px',
-                              background: preporuceni.length >= 12 ? '#ccc' : '#28a745',
+                              background: preporuceni.length >= MAX_RECOMMENDED_PRODUCTS ? '#ccc' : '#28a745',
                               color: 'white',
                               border: 'none',
                               borderRadius: '4px',
-                              cursor: preporuceni.length >= 12 ? 'not-allowed' : 'pointer',
+                              cursor: preporuceni.length >= MAX_RECOMMENDED_PRODUCTS ? 'not-allowed' : 'pointer',
                               fontWeight: 'bold',
                             }}
                           >
